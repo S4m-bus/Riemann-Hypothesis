@@ -10,6 +10,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: leanprover/lean-action@v1
+      - name: Set up Lean
+        uses: leanprover/lean-action@v1
         with:
-          build: true
+          auto-config: false
+          build: false
+          test: false
+          lint: false
+          use-github-cache: false
+          use-mathlib-cache: false
+      - name: Resolve Lake dependencies
+        run: lake update
+      - name: Build formalization
+        run: lake build
