@@ -1,5 +1,7 @@
 import Mathlib
 
+noncomputable section
+
 namespace RiemannHypothesis.AdelicFlow
 
 /-- A multiplicative scale `n` is primitive when `n ≥ 2` and it does not admit
