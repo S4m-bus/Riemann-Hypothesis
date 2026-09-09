@@ -10,17 +10,17 @@ namespace RiemannHypothesis.AdelicFlow
 
 The principal `ℚˣ` action becomes trivial after G2, so the nontrivial flow must
 come from a larger scaling group.  Over `ℚ` there is a unique infinite place,
-and its completion is canonically isomorphic to `ℝ`.  We use this to multiply
-the infinite component by `exp t`, while leaving the finite adele component
-fixed.
+and its completion is canonically isomorphic to `ℝ`.
 
-This constructs an actual real-parameter flow on the pre-quotient carrier and
-proves that it commutes with principal rational scaling, hence descends to the
+We form an infinite adele whose value at every infinite place has real
+coordinate `exp t`, and use multiplication by that adele as the real-parameter
+scaling flow.  Because the infinite adele ring is commutative, this flow
+commutes formally with principal rational scaling and therefore descends to the
 G2 quotient.
 -/
 
 /-- Every infinite place of `ℚ` is the unique real place. -/
-def ratInfinitePlaceIsReal (v : NumberField.InfinitePlace ℚ) :
+theorem ratInfinitePlaceIsReal (v : NumberField.InfinitePlace ℚ) :
     NumberField.InfinitePlace.IsReal v := by
   rw [Subsingleton.elim v Rat.infinitePlace]
   exact Rat.isReal_infinitePlace
@@ -31,55 +31,50 @@ def ratRealCoordinate (v : NumberField.InfinitePlace ℚ) :
   NumberField.InfinitePlace.Completion.ringEquivRealOfIsReal
     (ratInfinitePlaceIsReal v)
 
-/-- Multiplication by `e^t` in the real coordinate of one infinite completion. -/
-def scaleAtInfinitePlace (t : ℝ) (v : NumberField.InfinitePlace ℚ)
-    (x : v.Completion) : v.Completion :=
-  (ratRealCoordinate v).symm (Real.exp t * ratRealCoordinate v x)
+/-- The infinite adele with real coordinate `e^t` at each infinite place. -/
+def infiniteExpAdele (t : ℝ) : RationalInfiniteAdele :=
+  fun v => (ratRealCoordinate v).symm (Real.exp t)
 
 @[simp]
-theorem scaleAtInfinitePlace_zero (v : NumberField.InfinitePlace ℚ)
-    (x : v.Completion) :
-    scaleAtInfinitePlace 0 v x = x := by
+theorem infiniteExpAdele_zero :
+    infiniteExpAdele 0 = 1 := by
+  funext v
   apply (ratRealCoordinate v).injective
-  simp [scaleAtInfinitePlace]
+  simp [infiniteExpAdele]
 
-/-- Local real scalings satisfy the additive time law. -/
-theorem scaleAtInfinitePlace_add (s t : ℝ) (v : NumberField.InfinitePlace ℚ)
-    (x : v.Completion) :
-    scaleAtInfinitePlace (s + t) v x =
-      scaleAtInfinitePlace s v (scaleAtInfinitePlace t v x) := by
+/-- Exponential adeles convert addition of times to multiplication. -/
+theorem infiniteExpAdele_add (s t : ℝ) :
+    infiniteExpAdele (s + t) = infiniteExpAdele s * infiniteExpAdele t := by
+  funext v
   apply (ratRealCoordinate v).injective
-  simp [scaleAtInfinitePlace, Real.exp_add, mul_assoc]
+  simp [infiniteExpAdele, Real.exp_add]
 
-/-- Real scaling on the full infinite-adele component. -/
+/-- Real scaling on the infinite-adele component. -/
 def rationalInfiniteRealFlow (t : ℝ)
     (x : RationalInfiniteAdele) : RationalInfiniteAdele :=
-  fun v => scaleAtInfinitePlace t v (x v)
+  infiniteExpAdele t * x
 
 @[simp]
 theorem rationalInfiniteRealFlow_zero (x : RationalInfiniteAdele) :
     rationalInfiniteRealFlow 0 x = x := by
-  funext v
-  exact scaleAtInfinitePlace_zero v (x v)
+  simp [rationalInfiniteRealFlow]
 
 /-- The infinite-adele real scaling is an additive `ℝ`-flow. -/
 theorem rationalInfiniteRealFlow_add (s t : ℝ) (x : RationalInfiniteAdele) :
     rationalInfiniteRealFlow (s + t) x =
       rationalInfiniteRealFlow s (rationalInfiniteRealFlow t x) := by
-  funext v
-  exact scaleAtInfinitePlace_add s t v (x v)
+  rw [rationalInfiniteRealFlow, infiniteExpAdele_add]
+  simp only [rationalInfiniteRealFlow]
+  exact mul_assoc _ _ _
 
-/-- The real scaling commutes with multiplication by a principal rational unit
-on the infinite-adele sector.  This uses only commutativity after moving to the
-real coordinate. -/
+/-- The real scaling commutes with multiplication by every principal rational
+unit on the infinite-adele sector. -/
 theorem rationalInfiniteRealFlow_commutes_principal
     (t : ℝ) (u : ℚˣ) (x : RationalInfiniteAdele) :
     rationalInfiniteRealFlow t (infiniteScale u x) =
       infiniteScale u (rationalInfiniteRealFlow t x) := by
-  funext v
-  apply (ratRealCoordinate v).injective
-  simp [rationalInfiniteRealFlow, scaleAtInfinitePlace, infiniteScale,
-    mul_assoc, mul_left_comm, mul_comm]
+  simp only [rationalInfiniteRealFlow, infiniteScale]
+  ac_rfl
 
 /-- The external real flow on the exposed rational adele product: scale only the
 infinite component. -/
