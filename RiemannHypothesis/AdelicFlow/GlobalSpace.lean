@@ -8,18 +8,10 @@ namespace RiemannHypothesis.AdelicFlow
 /-!
 # G1: the global arithmetic carrier and local-to-global embeddings
 
-This file constructs an actual adelic carrier over `ℚ` using mathlib's adeles.
-It deliberately stops before quotienting by principal rational scalings.  That
-quotient is the next boundary (G2).
-
-The global carrier is
-
-    `NumberField.AdeleRing ℤ ℚ`
-
-which is definitionally the product of the infinite adele ring and the finite
-restricted adele ring.  We prove that both sectors embed injectively and that
-the canonical arithmetic scaling action of `ℚˣ` intertwines with both local
-sectors.
+Mathlib defines `NumberField.AdeleRing ℤ ℚ` as the product of the infinite
+adele ring and the finite restricted adele ring.  For the G1 proofs we expose
+that product directly, avoiding reducibility issues while retaining the same
+mathematical carrier.
 -/
 
 /-- The archimedean sector of the rational adeles. -/
@@ -28,36 +20,23 @@ abbrev RationalInfiniteAdele : Type := NumberField.InfiniteAdeleRing ℚ
 /-- The finite restricted-product sector of the rational adeles. -/
 abbrev RationalFiniteAdele : Type := IsDedekindDomain.FiniteAdeleRing ℤ ℚ
 
-/-- The actual adele ring of `ℚ`, using `ℤ` as its Dedekind domain. -/
+/-- Mathlib's actual rational adele ring. -/
 abbrev RationalAdele : Type := NumberField.AdeleRing ℤ ℚ
 
-/-- Our pre-quotient global arithmetic space.  It is an actual mathlib adele ring,
-not an axiomatized placeholder. -/
-abbrev GlobalSpace : Type := RationalAdele
+/-- The exposed product presentation of the rational adele ring. -/
+abbrev GlobalSpace : Type := RationalInfiniteAdele × RationalFiniteAdele
 
 /-- Embed the complete archimedean sector into the global adele space. -/
-def embedInfinite : RationalInfiniteAdele →+ GlobalSpace where
-  toFun x := (x, 0)
-  map_zero' := rfl
-  map_add' _ _ := rfl
+def embedInfinite (x : RationalInfiniteAdele) : GlobalSpace := (x, 0)
 
 /-- Embed the finite restricted-product sector into the global adele space. -/
-def embedFinite : RationalFiniteAdele →+ GlobalSpace where
-  toFun x := (0, x)
-  map_zero' := rfl
-  map_add' _ _ := rfl
+def embedFinite (x : RationalFiniteAdele) : GlobalSpace := (0, x)
 
-/-- Projection from the global adele space to the archimedean sector. -/
-def projectInfinite : GlobalSpace →+ RationalInfiniteAdele where
-  toFun x := x.1
-  map_zero' := rfl
-  map_add' _ _ := rfl
+/-- Projection to the archimedean sector. -/
+def projectInfinite (x : GlobalSpace) : RationalInfiniteAdele := x.1
 
-/-- Projection from the global adele space to the finite restricted-product sector. -/
-def projectFinite : GlobalSpace →+ RationalFiniteAdele where
-  toFun x := x.2
-  map_zero' := rfl
-  map_add' _ _ := rfl
+/-- Projection to the finite restricted-product sector. -/
+def projectFinite (x : GlobalSpace) : RationalFiniteAdele := x.2
 
 @[simp]
 theorem projectInfinite_embedInfinite (x : RationalInfiniteAdele) :
@@ -75,29 +54,23 @@ theorem projectFinite_embedInfinite (x : RationalInfiniteAdele) :
 theorem projectInfinite_embedFinite (x : RationalFiniteAdele) :
     projectInfinite (embedFinite x) = 0 := rfl
 
-/-- G1a: the archimedean sector is genuinely embedded in the global carrier. -/
+/-- G1a: the archimedean sector embeds injectively. -/
 theorem embedInfinite_injective : Function.Injective embedInfinite := by
   intro x y h
-  exact congrArg (fun z : GlobalSpace => z.1) h
+  exact congrArg Prod.fst h
 
-/-- G1a: the finite restricted-product sector is genuinely embedded in the global carrier. -/
+/-- G1a: the finite restricted-product sector embeds injectively. -/
 theorem embedFinite_injective : Function.Injective embedFinite := by
   intro x y h
-  exact congrArg (fun z : GlobalSpace => z.2) h
+  exact congrArg Prod.snd h
 
-/-- Every global adele splits into its archimedean and finite embedded pieces. -/
+/-- Every global adele splits into its archimedean and finite pieces. -/
 theorem global_decomposition (a : GlobalSpace) :
     embedInfinite a.1 + embedFinite a.2 = a := by
-  rcases a with ⟨a∞, af⟩
+  rcases a with ⟨ainf, afin⟩
   simp [embedInfinite, embedFinite]
 
-/-! ## Arithmetic scaling
-
-Before constructing a continuous logarithmic flow, there is already a canonical
-arithmetic scaling action: multiplication by a nonzero rational number.  We write
-it componentwise so compatibility with the product definition of the adele ring
-is transparent to Lean.
--/
+/-! ## Principal rational scaling -/
 
 /-- Rational scaling on the archimedean sector. -/
 def infiniteScale (u : ℚˣ) (x : RationalInfiniteAdele) : RationalInfiniteAdele :=
@@ -107,7 +80,7 @@ def infiniteScale (u : ℚˣ) (x : RationalInfiniteAdele) : RationalInfiniteAdel
 def finiteScale (u : ℚˣ) (x : RationalFiniteAdele) : RationalFiniteAdele :=
   (algebraMap ℚ RationalFiniteAdele (u : ℚ)) * x
 
-/-- Rational scaling on the full adele space, component by component. -/
+/-- Rational scaling on the full exposed adele product. -/
 def globalScale (u : ℚˣ) (a : GlobalSpace) : GlobalSpace :=
   (infiniteScale u a.1, finiteScale u a.2)
 
@@ -124,7 +97,7 @@ theorem finiteScale_one (x : RationalFiniteAdele) :
 @[simp]
 theorem globalScale_one (a : GlobalSpace) :
     globalScale (1 : ℚˣ) a = a := by
-  rcases a with ⟨a∞, af⟩
+  rcases a with ⟨ainf, afin⟩
   simp [globalScale]
 
 /-- Rational scalings compose according to multiplication in `ℚˣ`. -/
@@ -140,25 +113,20 @@ theorem finiteScale_mul (u v : ℚˣ) (x : RationalFiniteAdele) :
 /-- The componentwise global scaling is a genuine multiplicative action law. -/
 theorem globalScale_mul (u v : ℚˣ) (a : GlobalSpace) :
     globalScale (u * v) a = globalScale u (globalScale v a) := by
-  rcases a with ⟨a∞, af⟩
+  rcases a with ⟨ainf, afin⟩
   simp [globalScale, infiniteScale_mul, finiteScale_mul]
 
-/-- G1b: the archimedean embedding intertwines local rational scaling with the
-same global arithmetic scaling. -/
+/-- G1b: the infinite embedding intertwines principal rational scaling. -/
 theorem embedInfinite_intertwines_scale (u : ℚˣ) (x : RationalInfiniteAdele) :
     embedInfinite (infiniteScale u x) = globalScale u (embedInfinite x) := by
   simp [embedInfinite, globalScale, finiteScale]
 
-/-- G1b: the finite restricted-product embedding intertwines local rational
-scaling with the same global arithmetic scaling. -/
+/-- G1b: the finite embedding intertwines principal rational scaling. -/
 theorem embedFinite_intertwines_scale (u : ℚˣ) (x : RationalFiniteAdele) :
     embedFinite (finiteScale u x) = globalScale u (embedFinite x) := by
   simp [embedFinite, globalScale, infiniteScale]
 
-/-- The exact G1 carrier result: both local sectors embed injectively, reconstruct
-every global adele additively, and are compatible with principal rational scaling.
-This is intentionally weaker than existence of the desired continuous Hilbert--Pólya
-flow; no such flow is asserted here. -/
+/-- The exact G1 carrier result. -/
 theorem G1_local_to_global_embedding :
     Function.Injective embedInfinite ∧
     Function.Injective embedFinite ∧
@@ -172,9 +140,8 @@ theorem G1_local_to_global_embedding :
   · exact embedInfinite_intertwines_scale
   · exact embedFinite_intertwines_scale
 
-/-- Boundary for the next stage.  The eventual continuous logarithmic flow must
-restrict to local flows through the proven embeddings.  This structure records
-that dynamical obligation without assuming that such a flow exists. -/
+/-- Boundary for a future continuous logarithmic flow on the exposed adelic
+product.  This records a requirement; it does not assert existence. -/
 structure G1ContinuousFlowBoundary where
   globalFlow : ℝ → GlobalSpace → GlobalSpace
   infiniteFlow : ℝ → RationalInfiniteAdele → RationalInfiniteAdele
