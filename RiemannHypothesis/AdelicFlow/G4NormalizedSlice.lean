@@ -23,6 +23,11 @@ This is a genuine quotient-flow compatibility theorem.  It still does not prove
 G3 orbit exhaustion or injectivity of the slice map.
 -/
 
+/-- The canonical class map from the exposed global carrier to the twice
+quotiented scaling site. -/
+def scalingSiteClass (a : GlobalSpace) : ScalingSiteQuotient :=
+  toScalingSiteQuotient (toPrincipalQuotient a)
+
 /-- The normalized archimedean slice of the pre-quotient global adele carrier. -/
 def normalizedArchimedeanSlice
     (y : PrequotientTransverseCarrier) : GlobalSpace :=
@@ -43,10 +48,13 @@ theorem stableCorrectedGlobalReturn_on_normalizedSlice
   apply Prod.ext
   · funext v
     apply (ratRealCoordinate v).injective
+    have hpR : ((p : ℝ) ^ m) ≠ 0 := by
+      exact pow_ne_zero _ (by exact_mod_cast hp.ne_zero)
     simp [stableCorrectedGlobalReturn, normalizedArchimedeanSlice,
       globalScale, infiniteScale, archimedeanGlobalFlow,
-      rationalInfiniteRealFlow, infiniteExpAdele,
-      exp_negativePrimeReturnTime p m hp]
+      rationalInfiniteRealFlow, infiniteExpAdele, primePowerUnit,
+      NumberField.InfiniteAdeleRing.algebraMap_apply,
+      exp_negativePrimeReturnTime p m hp, hpR]
   · rfl
 
 /-- Principal rational scaling does not change a scaling-site class. -/
