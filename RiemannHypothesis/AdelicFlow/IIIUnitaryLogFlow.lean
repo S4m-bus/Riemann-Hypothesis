@@ -41,7 +41,8 @@ theorem logUnitaryFlow_zero (f : LogHilbert) :
 /-- The logarithmic pullbacks obey the one-parameter group law. -/
 theorem logUnitaryFlow_add (s t : ℝ) (f : LogHilbert) :
     logUnitaryFlow (s + t) f = logUnitaryFlow s (logUnitaryFlow t f) := by
-  simp [logUnitaryFlow]
+  simpa [logUnitaryFlow, add_comm] using
+    (add_vadd (DomAddAct.mk s) (DomAddAct.mk t) f)
 
 /-- Each logarithmic translation preserves the `L²` norm. -/
 theorem logUnitaryFlow_norm (t : ℝ) (f : LogHilbert) :
@@ -58,7 +59,8 @@ theorem logUnitaryFlow_neg_left (t : ℝ) (f : LogHilbert) :
 translation depends continuously on time. -/
 theorem logUnitaryFlow_strongContinuous (f : LogHilbert) :
     Continuous (fun t : ℝ => logUnitaryFlow t f) := by
-  fun_prop
+  change Continuous (fun t : ℝ => DomAddAct.mk t +ᵥ f)
+  exact continuous_vadd.comp (DomAddAct.continuous_mk.prod_mk continuous_const)
 
 /-! ## The exact unbounded Number III target
 
