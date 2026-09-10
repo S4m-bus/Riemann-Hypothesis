@@ -56,22 +56,20 @@ theorem padic_positiveReturnCompensator
   letI : Fact p.Prime := ⟨hp⟩
   have hp0 : ((p : ℚ) ^ m) ≠ 0 := by
     exact pow_ne_zero _ (by exact_mod_cast hp.ne_zero)
+  have hdiv := padicNorm.div (p := p) (1 : ℚ) ((p : ℚ) ^ m)
   unfold positiveReturnCompensator
-  rw [← one_div]
-  rw [padicNorm.div]
-  rw [padic_return_modulus_eq_inv_pow p m hp]
-  simp [padicNorm.one, hp0]
+  simpa [one_div, padicNorm.one,
+    padic_return_modulus_eq_inv_pow p m hp, hp0] using hdiv
 
 /-- At every other prime, the positive-time compensator is still a local unit. -/
 theorem padic_positiveReturnCompensator_off_diagonal
     (p q m : ℕ) (hp : Nat.Prime p) (hq : Nat.Prime q) (hqp : q ≠ p) :
     padicNorm q (positiveReturnCompensator p m) = 1 := by
   letI : Fact q.Prime := ⟨hq⟩
+  have hdiv := padicNorm.div (p := q) (1 : ℚ) ((p : ℚ) ^ m)
   unfold positiveReturnCompensator
-  rw [← one_div]
-  rw [padicNorm.div]
-  rw [padic_off_diagonal_pow_unit p q m hp hq hqp]
-  simp [padicNorm.one]
+  simpa [one_div, padicNorm.one,
+    padic_off_diagonal_pow_unit p q m hp hq hqp] using hdiv
 
 /-- The negative-time compensator has the contracting p-adic modulus `p^{-m}`. -/
 theorem padic_negativeReturnCompensator
