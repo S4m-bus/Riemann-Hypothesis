@@ -1,5 +1,4 @@
 import RiemannHypothesis.AdelicFlow.G4TransverseGeometry
-import Mathlib.NumberTheory.Padics.LocalField
 import Mathlib.NumberTheory.Padics.RingHoms
 import Mathlib.MeasureTheory.Measure.Haar.Basic
 import Mathlib.MeasureTheory.Group.Measure
@@ -15,7 +14,7 @@ namespace RiemannHypothesis.AdelicFlow
 # G4: the measure-theoretic transverse Jacobian
 
 The algebraic G4 files identify the stable transverse return at a prime `p`
-with multiplication by `p^m` in the distinguished `p`-adic direction.  This
+with multiplication by `p^m` in the distinguished `p`-adic direction. This
 file upgrades that modulus to a genuine additive-Haar measure statement.
 
 There are two conventions which must be kept separate:
@@ -89,7 +88,7 @@ theorem padicStableLattice_measurable (p m : ℕ) [Fact p.Prime] :
   exact (isClosed_le continuous_norm continuous_const).measurableSet
 
 /-- The normalized additive Haar mass of the stable lattice is exactly
-`(p^m)^{-1}`.  This is the genuine measure-theoretic source of the G4
+`(p^m)^{-1}`. This is the genuine measure-theoretic source of the G4
 transverse Jacobian. -/
 theorem padicStableLattice_measure (p m : ℕ) [Fact p.Prime] :
     padicIntegerHaar p (padicStableLattice p m : Set ℤ_[p]) =
