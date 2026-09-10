@@ -19,13 +19,11 @@ commutes formally with principal rational scaling and therefore descends to the
 G2 quotient.
 -/
 
-/-- Every infinite place of `ℚ` is the unique real place. -/
 theorem ratInfinitePlaceIsReal (v : NumberField.InfinitePlace ℚ) :
     NumberField.InfinitePlace.IsReal v := by
   rw [Subsingleton.elim v Rat.infinitePlace]
   exact Rat.isReal_infinitePlace
 
-/-- Real coordinate on the completion at an infinite place of `ℚ`. -/
 def ratRealCoordinate (v : NumberField.InfinitePlace ℚ) :
     v.Completion ≃+* ℝ :=
   NumberField.InfinitePlace.Completion.ringEquivRealOfIsReal
@@ -39,15 +37,18 @@ def infiniteExpAdele (t : ℝ) : RationalInfiniteAdele :=
 theorem infiniteExpAdele_zero :
     infiniteExpAdele 0 = 1 := by
   funext v
-  apply (ratRealCoordinate v).injective
-  simp [infiniteExpAdele]
+  change (ratRealCoordinate v).symm (Real.exp 0) = (1 : v.Completion)
+  simp
 
 /-- Exponential adeles convert addition of times to multiplication. -/
 theorem infiniteExpAdele_add (s t : ℝ) :
     infiniteExpAdele (s + t) = infiniteExpAdele s * infiniteExpAdele t := by
   funext v
-  apply (ratRealCoordinate v).injective
-  simp [infiniteExpAdele, Real.exp_add]
+  change (ratRealCoordinate v).symm (Real.exp (s + t)) =
+    (ratRealCoordinate v).symm (Real.exp s) *
+      (ratRealCoordinate v).symm (Real.exp t)
+  rw [Real.exp_add]
+  exact map_mul (ratRealCoordinate v).symm (Real.exp s) (Real.exp t)
 
 /-- Real scaling on the infinite-adele component. -/
 def rationalInfiniteRealFlow (t : ℝ)
@@ -59,7 +60,6 @@ theorem rationalInfiniteRealFlow_zero (x : RationalInfiniteAdele) :
     rationalInfiniteRealFlow 0 x = x := by
   simp [rationalInfiniteRealFlow]
 
-/-- The infinite-adele real scaling is an additive `ℝ`-flow. -/
 theorem rationalInfiniteRealFlow_add (s t : ℝ) (x : RationalInfiniteAdele) :
     rationalInfiniteRealFlow (s + t) x =
       rationalInfiniteRealFlow s (rationalInfiniteRealFlow t x) := by
@@ -88,7 +88,6 @@ theorem archimedeanGlobalFlow_zero (a : GlobalSpace) :
   · simp [archimedeanGlobalFlow]
   · rfl
 
-/-- The external scaling satisfies the global additive time law. -/
 theorem archimedeanGlobalFlow_add (s t : ℝ) (a : GlobalSpace) :
     archimedeanGlobalFlow (s + t) a =
       archimedeanGlobalFlow s (archimedeanGlobalFlow t a) := by
@@ -96,7 +95,6 @@ theorem archimedeanGlobalFlow_add (s t : ℝ) (a : GlobalSpace) :
   · exact rationalInfiniteRealFlow_add s t a.1
   · rfl
 
-/-- The external real flow commutes with every principal rational scaling. -/
 theorem archimedeanGlobalFlow_commutes_principal (t : ℝ) :
     CommutesWithPrincipalScaling (archimedeanGlobalFlow t) := by
   intro u a
@@ -104,8 +102,7 @@ theorem archimedeanGlobalFlow_commutes_principal (t : ℝ) :
   · exact rationalInfiniteRealFlow_commutes_principal t u a.1
   · rfl
 
-/-- Hence the real scaling gives an actual instance of the G2 quotient-flow
-boundary, not merely an axiomatized placeholder. -/
+/-- Actual G2 boundary object supplied by archimedean real scaling. -/
 def archimedeanQuotientFlowBoundary : QuotientFlowBoundary where
   flow := archimedeanGlobalFlow
   zero := archimedeanGlobalFlow_zero
@@ -122,7 +119,6 @@ theorem principalArchimedeanFlow_zero (x : PrincipalQuotient) :
     principalArchimedeanFlow 0 x = x :=
   archimedeanQuotientFlowBoundary.quotientFlow_zero x
 
-/-- The descended real scaling is itself an additive flow. -/
 theorem principalArchimedeanFlow_add (s t : ℝ) (x : PrincipalQuotient) :
     principalArchimedeanFlow (s + t) x =
       principalArchimedeanFlow s (principalArchimedeanFlow t x) :=
