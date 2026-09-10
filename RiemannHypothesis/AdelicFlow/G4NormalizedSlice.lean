@@ -51,13 +51,12 @@ theorem stableCorrectedGlobalReturn_on_normalizedSlice
       exact pow_ne_zero _ (by exact_mod_cast hp.ne_zero)
     simp only [stableCorrectedGlobalReturn, normalizedArchimedeanSlice,
       globalScale, infiniteScale, archimedeanGlobalFlow,
-      rationalInfiniteRealFlow, primePowerUnit,
-      NumberField.InfiniteAdeleRing.algebraMap_apply, mul_one]
-    change ((p : v.Completion) ^ m) *
-        (ratRealCoordinate v).symm (Real.exp (negativePrimeReturnTime p m)) = 1
+      rationalInfiniteRealFlow, Pi.mul_apply, Pi.one_apply, mul_one]
+    rw [NumberField.InfiniteAdeleRing.algebraMap_apply]
+    rw [coe_primePowerUnit]
+    unfold infiniteExpAdele
     apply (ratRealCoordinate v).injective
-    rw [map_mul, map_pow, map_natCast]
-    simp only [RingEquiv.apply_symm_apply, map_one]
+    simp only [map_mul, map_pow, map_ratCast, RingEquiv.apply_symm_apply, map_one]
     rw [exp_negativePrimeReturnTime p m hp]
     exact mul_inv_cancel₀ hpR
   · rfl
