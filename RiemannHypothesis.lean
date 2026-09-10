@@ -17,5 +17,4 @@ import RiemannHypothesis.AdelicFlow.G4ReturnOrientation
 import RiemannHypothesis.AdelicFlow.G4PoincareReturn
 import RiemannHypothesis.AdelicFlow.G4CorrectedReturn
 import RiemannHypothesis.AdelicFlow.G4TransverseQuotient
-import RiemannHypothesis.AdelicFlow.G4NormalizedSlice
 import RiemannHypothesis.AdelicFlow.G4HaarJacobian
