@@ -16,3 +16,4 @@ import RiemannHypothesis.AdelicFlow.G4TransverseGeometry
 import RiemannHypothesis.AdelicFlow.G4ReturnOrientation
 import RiemannHypothesis.AdelicFlow.G4PoincareReturn
 import RiemannHypothesis.AdelicFlow.G4CorrectedReturn
+import RiemannHypothesis.AdelicFlow.G4TransverseQuotient
