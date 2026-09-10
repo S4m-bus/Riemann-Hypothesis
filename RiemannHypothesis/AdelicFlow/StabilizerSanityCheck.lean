@@ -35,10 +35,10 @@ theorem singleZeroFiniteAdele_eq_zero_iff
     (v0 v : RationalFinitePlace) :
     singleZeroFiniteAdele v0 v = 0 ↔ v = v0 := by
   classical
+  change (if v = v0 then (0 : v.adicCompletion ℚ) else 1) = 0 ↔ v = v0
   by_cases h : v = v0
-  · subst v
-    simp [singleZeroFiniteAdele]
-  · simp [singleZeroFiniteAdele, h]
+  · simp [h]
+  · simp [h]
 
 /-- A global adele with zero archimedean component and exactly one finite zero. -/
 def archZeroSingleFiniteZero (v0 : RationalFinitePlace) : GlobalSpace :=
