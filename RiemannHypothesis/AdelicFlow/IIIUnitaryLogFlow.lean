@@ -13,7 +13,7 @@ namespace RiemannHypothesis.AdelicFlow
 # Number III: quantum log-flow boundary
 
 The correct self-adjointness target is an unbounded operator on a complex Hilbert
-space.  Before constructing its generator, we first construct the kinematic
+space. Before constructing its generator, we first construct the kinematic
 one-parameter unitary representation associated with translation in the
 logarithmic coordinate `q = log x`.
 
@@ -22,11 +22,11 @@ measure `dq` is translation invariant, hence pullback by `q ↦ q+t` is an
 isometry on `L²(ℝ, dq)`.
 -/
 
-/-- The logarithmic Hilbert space `L²(ℝ, ℂ)`. -/
+/-- The logarithmic Hilbert space `L²(ℝ, ℂ)` with its canonical volume measure. -/
 abbrev LogHilbert : Type :=
-  MeasureTheory.Lp ℂ 2 (MeasureTheory.volume : MeasureTheory.Measure ℝ)
+  MeasureTheory.Lp (α := ℝ) ℂ 2
 
-/-- Pullback by translation in the logarithmic coordinate.  The domain-action
+/-- Pullback by translation in the logarithmic coordinate. The domain-action
 wrapper is used by mathlib precisely so that these pullbacks form a left group
 action on `Lᵖ`. -/
 def logUnitaryFlow (t : ℝ) (f : LogHilbert) : LogHilbert :=
@@ -40,7 +40,7 @@ theorem logUnitaryFlow_zero (f : LogHilbert) :
 /-- The logarithmic pullbacks obey the one-parameter group law. -/
 theorem logUnitaryFlow_add (s t : ℝ) (f : LogHilbert) :
     logUnitaryFlow (s + t) f = logUnitaryFlow s (logUnitaryFlow t f) := by
-  simp [logUnitaryFlow, add_vadd]
+  simp [logUnitaryFlow]
 
 /-- Each logarithmic translation preserves the `L²` norm. -/
 theorem logUnitaryFlow_norm (t : ℝ) (f : LogHilbert) :
@@ -62,7 +62,7 @@ theorem logUnitaryFlow_strongContinuous (f : LogHilbert) :
 /-! ## The exact unbounded Number III target
 
 Mathlib's `LinearPMap` is the appropriate object for an unbounded Hilbert-space
-operator.  We do not replace the Hilbert--Pólya generator by a bounded surrogate.
+operator. We do not replace the Hilbert--Pólya generator by a bounded surrogate.
 -/
 
 open scoped LinearPMap
