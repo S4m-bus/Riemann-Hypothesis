@@ -16,8 +16,11 @@ with translation flow.  We prove its full period lattice and that `log p` is its
 least positive period.  The disjoint union over primes therefore has primitive
 component labels exactly the primes.
 
-The final bridge identifying this explicit periodic sector with the complete
-periodic locus of the adelic quotient remains isolated below and is not assumed.
+This file only constructs and classifies the explicit prime circles.  The later
+global theorem must identify these with the closed/cyclic-stabilizer orbits of
+the maximal-compact adelic quotient.  Merely having one positive return time is
+not sufficient for that global classification: points with several vanishing
+finite components can have several incommensurable return times.
 -/
 
 abbrev PrimeLabel := {p : ℕ // Nat.Prime p}
@@ -165,31 +168,5 @@ theorem constructedPrimitiveOrbits_iff_prime (n : ℕ) :
     exact hp
   · intro hp
     exact ⟨hp, primeOrbitPeriod_isPrimitive (⟨n, hp⟩ : PrimeLabel)⟩
-
-/-! ## Remaining G3 adelic bridge -/
-
-/-- The exact remaining obligation: identify the explicitly constructed prime
-periodic sector with the complete positive-periodic locus of the descended
-adelic flow. -/
-structure G3AdelicPeriodicBridge where
-  quotientDynamics : QuotientFlowBoundary
-  embedPeriodicSector : PrimePeriodicSector → PrincipalQuotient
-  embed_injective : Function.Injective embedPeriodicSector
-
-  intertwining : ∀ t x,
-    embedPeriodicSector (primePeriodicSectorFlow t x) =
-      quotientDynamics.quotientFlow t (embedPeriodicSector x)
-
-  periodic_exhaustion : ∀ y : PrincipalQuotient,
-    (∃ t : ℝ, 0 < t ∧ quotientDynamics.quotientFlow t y = y) →
-      ∃ x : PrimePeriodicSector, embedPeriodicSector x = y
-
-theorem G3AdelicPeriodicBridge.periodic_point_has_prime_representative
-    (G : G3AdelicPeriodicBridge) (y : PrincipalQuotient)
-    (hy : ∃ t : ℝ, 0 < t ∧ G.quotientDynamics.quotientFlow t y = y) :
-    ∃ x : PrimePeriodicSector,
-      G.embedPeriodicSector x = y ∧ Nat.Prime x.1.1 := by
-  rcases G.periodic_exhaustion y hy with ⟨x, hx⟩
-  exact ⟨x, hx, periodicSector_label_prime x⟩
 
 end RiemannHypothesis.AdelicFlow
