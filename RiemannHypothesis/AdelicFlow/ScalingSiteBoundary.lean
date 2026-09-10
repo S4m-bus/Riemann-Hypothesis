@@ -1,4 +1,4 @@
-import RiemannHypothesis.AdelicFlow.ArchimedeanFlow
+import RiemannHypothesis.AdelicFlow.MaximalCompactQuotient
 import RiemannHypothesis.AdelicFlow.ScalingPeriodicSector
 
 noncomputable section
@@ -9,8 +9,7 @@ namespace RiemannHypothesis.AdelicFlow
 # G3 global bridge: closed orbits of the scaling-site quotient
 
 The prime circles constructed in `ScalingPeriodicSector.lean` belong naturally
-to a further quotient of the principal adele class space by the maximal compact
-finite-idelic subgroup.
+to the maximal-compact quotient constructed in `MaximalCompactQuotient.lean`.
 
 A crucial distinction is enforced here: a point having one positive return time
 is NOT by itself a primitive closed orbit.  Points with several vanishing finite
@@ -30,6 +29,18 @@ structure ScalingSiteQuotientBoundary where
   project_intertwines : ∀ t x,
     project (principalArchimedeanFlow t x) = flow t (project x)
 
+/-- G3 no longer has to guess its ambient site: the maximal-compact quotient and
+its descended real flow give an actual instance of the site boundary. -/
+def actualScalingSiteQuotientBoundary : ScalingSiteQuotientBoundary where
+  X := ScalingSiteQuotient
+  project := toScalingSiteQuotient
+  flow := scalingSiteFlow
+  flow_zero := scalingSiteFlow_zero
+  flow_add := scalingSiteFlow_add
+  project_intertwines := by
+    intro t x
+    exact (scalingSiteFlow_mk t x).symm
+
 /-- A point has a genuine closed-orbit stabilizer of primitive length `T` when
 its complete return-time set is exactly `Tℤ`. -/
 def HasCyclicStabilizer (S : ScalingSiteQuotientBoundary)
@@ -43,26 +54,26 @@ def LiesOnClosedPrimitiveOrbit (S : ScalingSiteQuotientBoundary)
     (y : S.X) : Prop :=
   ∃ T : ℝ, HasCyclicStabilizer S y T
 
-/-- Complete G3 bridge obligation: prime circles embed equivariantly and exhaust
-the cyclic-stabilizer closed-orbit locus. -/
+/-- Complete remaining G3 bridge obligation: prime circles must embed
+injectively/equivariantly into the ACTUAL maximal-compact quotient and exhaust
+its cyclic-stabilizer closed-orbit locus. -/
 structure G3ScalingSiteBridge where
-  site : ScalingSiteQuotientBoundary
-  embedPeriodicSector : PrimePeriodicSector → site.X
+  embedPeriodicSector : PrimePeriodicSector → ScalingSiteQuotient
   embed_injective : Function.Injective embedPeriodicSector
 
   intertwining : ∀ t x,
     embedPeriodicSector (primePeriodicSectorFlow t x) =
-      site.flow t (embedPeriodicSector x)
+      scalingSiteFlow t (embedPeriodicSector x)
 
-  closedOrbitExhaustion : ∀ y : site.X,
-    LiesOnClosedPrimitiveOrbit site y →
+  closedOrbitExhaustion : ∀ y : ScalingSiteQuotient,
+    LiesOnClosedPrimitiveOrbit actualScalingSiteQuotientBoundary y →
       ∃ x : PrimePeriodicSector, embedPeriodicSector x = y
 
 /-- A time is a period of the entire embedded `p`-circle. -/
 def IsEmbeddedPrimePeriod (G : G3ScalingSiteBridge)
     (p : PrimeLabel) (t : ℝ) : Prop :=
   ∀ x : PrimeOrbit p,
-    G.site.flow t (G.embedPeriodicSector ⟨p, x⟩) =
+    scalingSiteFlow t (G.embedPeriodicSector ⟨p, x⟩) =
       G.embedPeriodicSector ⟨p, x⟩
 
 /-- Injectivity and intertwining make the embedded period condition exactly the
@@ -105,8 +116,8 @@ theorem G3ScalingSiteBridge.primePeriod_isPrimitive
 /-- Every point on a genuine closed primitive orbit has a prime-circle
 representative. -/
 theorem G3ScalingSiteBridge.closed_orbit_has_prime_representative
-    (G : G3ScalingSiteBridge) (y : G.site.X)
-    (hy : LiesOnClosedPrimitiveOrbit G.site y) :
+    (G : G3ScalingSiteBridge) (y : ScalingSiteQuotient)
+    (hy : LiesOnClosedPrimitiveOrbit actualScalingSiteQuotientBoundary y) :
     ∃ x : PrimePeriodicSector,
       G.embedPeriodicSector x = y ∧ Nat.Prime x.1.1 := by
   rcases G.closedOrbitExhaustion y hy with ⟨x, hx⟩
@@ -118,8 +129,8 @@ theorem G3ScalingSiteBridge.G3_prime_orbit_package
     (G : G3ScalingSiteBridge) :
     (∀ p : PrimeLabel,
       IsPrimitiveEmbeddedPrimePeriod G p (primeOrbitPeriod p)) ∧
-    (∀ y : G.site.X,
-      LiesOnClosedPrimitiveOrbit G.site y →
+    (∀ y : ScalingSiteQuotient,
+      LiesOnClosedPrimitiveOrbit actualScalingSiteQuotientBoundary y →
         ∃ x : PrimePeriodicSector,
           G.embedPeriodicSector x = y ∧ Nat.Prime x.1.1) := by
   constructor
