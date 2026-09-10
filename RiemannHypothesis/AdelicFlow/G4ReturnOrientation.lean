@@ -57,7 +57,7 @@ theorem padic_positiveReturnCompensator
   have hp0 : ((p : ℚ) ^ m) ≠ 0 := by
     exact pow_ne_zero _ (by exact_mod_cast hp.ne_zero)
   unfold positiveReturnCompensator
-  change padicNorm p (1 / ((p : ℚ) ^ m)) = (p : ℚ) ^ m
+  rw [← one_div]
   rw [padicNorm.div]
   rw [padic_return_modulus_eq_inv_pow p m hp]
   simp [padicNorm.one, hp0]
@@ -68,7 +68,7 @@ theorem padic_positiveReturnCompensator_off_diagonal
     padicNorm q (positiveReturnCompensator p m) = 1 := by
   letI : Fact q.Prime := ⟨hq⟩
   unfold positiveReturnCompensator
-  change padicNorm q (1 / ((p : ℚ) ^ m)) = 1
+  rw [← one_div]
   rw [padicNorm.div]
   rw [padic_off_diagonal_pow_unit p q m hp hq hqp]
   simp [padicNorm.one]
