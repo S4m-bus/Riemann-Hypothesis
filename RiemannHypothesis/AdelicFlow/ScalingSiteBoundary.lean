@@ -6,19 +6,21 @@ noncomputable section
 namespace RiemannHypothesis.AdelicFlow
 
 /-!
-# G3 global bridge: from the adele class space to the scaling-site quotient
+# G3 global bridge: closed orbits of the scaling-site quotient
 
-The prime circles constructed in `ScalingPeriodicSector.lean` should not be
-forced directly into the principal quotient `ℚˣ \ 𝔸_ℚ`.  The natural geometric
-target is a further quotient by the maximal compact finite-idelic subgroup.
+The prime circles constructed in `ScalingPeriodicSector.lean` belong naturally
+to a further quotient of the principal adele class space by the maximal compact
+finite-idelic subgroup.
 
-This file isolates that remaining construction as an explicit interface.  No
-existence of the maximal-compact quotient is asserted here.
+A crucial distinction is enforced here: a point having one positive return time
+is NOT by itself a primitive closed orbit.  Points with several vanishing finite
+components can carry several incommensurable return times.  The correct G3
+object is a point/component whose stabilizer is a discrete cyclic lattice
+`Tℤ`.  Prime circles have precisely the stabilizer `(log p)ℤ`.
 -/
 
-/-- Boundary for the further quotient of the principal adele class space on
-which the real scaling flow is to act.  The intended future implementation is
-the maximal-compact/scaling-site quotient. -/
+/-- Interface for a scaling-site quotient carrying the descended real scaling
+flow. -/
 structure ScalingSiteQuotientBoundary where
   X : Type
   project : PrincipalQuotient → X
@@ -27,14 +29,25 @@ structure ScalingSiteQuotientBoundary where
   flow_zero : ∀ x, flow 0 x = x
   flow_add : ∀ s t x, flow (s + t) x = flow s (flow t x)
 
-  /-- The further quotient must intertwine the actual archimedean flow already
-  constructed on the principal quotient. -/
   project_intertwines : ∀ t x,
     project (principalArchimedeanFlow t x) = flow t (project x)
 
-/-- Complete G3 bridge obligation.  Once constructed, the explicit prime
-periodic sector must embed into the scaling-site quotient, with its flow, and it
-must exhaust all positive-periodic points. -/
+/-- A point has a genuine closed-orbit stabilizer of primitive length `T` when
+its complete return-time set is exactly `Tℤ`. -/
+def HasCyclicStabilizer (S : ScalingSiteQuotientBoundary)
+    (y : S.X) (T : ℝ) : Prop :=
+  0 < T ∧ ∀ t : ℝ,
+    S.flow t y = y ↔ ∃ n : ℤ, n • T = t
+
+/-- A point lies on a closed primitive orbit if its stabilizer is a nonzero
+cyclic lattice. -/
+def LiesOnClosedPrimitiveOrbit (S : ScalingSiteQuotientBoundary)
+    (y : S.X) : Prop :=
+  ∃ T : ℝ, HasCyclicStabilizer S y T
+
+/-- Complete G3 bridge obligation.  It asks that the explicit prime circles
+embed equivariantly and exhaust the cyclic-stabilizer (closed-orbit) locus,
+not every point with an isolated positive return. -/
 structure G3ScalingSiteBridge where
   site : ScalingSiteQuotientBoundary
   embedPeriodicSector : PrimePeriodicSector → site.X
@@ -44,12 +57,11 @@ structure G3ScalingSiteBridge where
     embedPeriodicSector (primePeriodicSectorFlow t x) =
       site.flow t (embedPeriodicSector x)
 
-  periodic_exhaustion : ∀ y : site.X,
-    (∃ t : ℝ, 0 < t ∧ site.flow t y = y) →
+  closedOrbitExhaustion : ∀ y : site.X,
+    LiesOnClosedPrimitiveOrbit site y →
       ∃ x : PrimePeriodicSector, embedPeriodicSector x = y
 
-/-- A time is a period of the entire embedded `p`-circle in the scaling-site
-model. -/
+/-- A time is a period of the entire embedded `p`-circle. -/
 def IsEmbeddedPrimePeriod (G : G3ScalingSiteBridge)
     (p : PrimeLabel) (t : ℝ) : Prop :=
   ∀ x : PrimeOrbit p,
@@ -75,9 +87,8 @@ def IsPrimitiveEmbeddedPrimePeriod (G : G3ScalingSiteBridge)
   0 < t ∧ IsEmbeddedPrimePeriod G p t ∧
     ∀ s : ℝ, 0 < s → IsEmbeddedPrimePeriod G p s → t ≤ s
 
-/-- Once the scaling-site bridge exists, the primitive period of the embedded
-`p`-orbit is forced to remain exactly `log p`; no shorter return can be created
-by the quotient because the prime-sector embedding is injective. -/
+/-- Once the bridge exists, the primitive period of the embedded `p`-orbit is
+forced to remain exactly `log p`. -/
 theorem G3ScalingSiteBridge.primePeriod_isPrimitive
     (G : G3ScalingSiteBridge) (p : PrimeLabel) :
     IsPrimitiveEmbeddedPrimePeriod G p (primeOrbitPeriod p) := by
@@ -88,30 +99,30 @@ theorem G3ScalingSiteBridge.primePeriod_isPrimitive
     apply hlocal.2.2 s hs
     exact (G.embeddedPrimePeriod_iff p s).1 hperiod
 
-/-- Under the bridge, every positive-periodic global point belongs to the image
-of a uniquely embedded point whose component label is prime. -/
-theorem G3ScalingSiteBridge.periodic_point_has_prime_representative
+/-- Under the corrected bridge, every point on a genuine closed primitive orbit
+has a representative in a prime circle. -/
+theorem G3ScalingSiteBridge.closed_orbit_has_prime_representative
     (G : G3ScalingSiteBridge) (y : G.site.X)
-    (hy : ∃ t : ℝ, 0 < t ∧ G.site.flow t y = y) :
+    (hy : LiesOnClosedPrimitiveOrbit G.site y) :
     ∃ x : PrimePeriodicSector,
       G.embedPeriodicSector x = y ∧ Nat.Prime x.1.1 := by
-  rcases G.periodic_exhaustion y hy with ⟨x, hx⟩
+  rcases G.closedOrbitExhaustion y hy with ⟨x, hx⟩
   exact ⟨x, hx, periodicSector_label_prime x⟩
 
-/-- Therefore a completed G3 bridge simultaneously gives prime-only periodic
-components and the exact primitive length `log p` on each such component. -/
+/-- Correct G3 package: prime fibers have exact primitive length `log p`, and
+all cyclic-stabilizer closed orbits are exhausted by those prime fibers. -/
 theorem G3ScalingSiteBridge.G3_prime_orbit_package
     (G : G3ScalingSiteBridge) :
     (∀ p : PrimeLabel,
       IsPrimitiveEmbeddedPrimePeriod G p (primeOrbitPeriod p)) ∧
     (∀ y : G.site.X,
-      (∃ t : ℝ, 0 < t ∧ G.site.flow t y = y) →
+      LiesOnClosedPrimitiveOrbit G.site y →
         ∃ x : PrimePeriodicSector,
           G.embedPeriodicSector x = y ∧ Nat.Prime x.1.1) := by
   constructor
   · intro p
     exact G.primePeriod_isPrimitive p
   · intro y hy
-    exact G.periodic_point_has_prime_representative y hy
+    exact G.closed_orbit_has_prime_representative y hy
 
 end RiemannHypothesis.AdelicFlow
