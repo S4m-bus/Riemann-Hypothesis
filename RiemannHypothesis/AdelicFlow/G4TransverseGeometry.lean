@@ -84,6 +84,21 @@ theorem stableGlobalTransverseHalfDensity_sq
   rw [Real.sq_sqrt]
   positivity
 
+/-- Exact exponent form of the stable half-density: `p^{-m/2}`. -/
+theorem stableGlobalTransverseHalfDensity_eq_rpow
+    (p m : ℕ) (hp : Nat.Prime p) :
+    stableGlobalTransverseHalfDensity p m =
+      (p : ℝ) ^ (-(m : ℝ) / 2 : ℝ) := by
+  have hp0 : (0 : ℝ) ≤ (p : ℝ) := by positivity
+  unfold stableGlobalTransverseHalfDensity
+  rw [Real.sqrt_eq_rpow]
+  rw [Real.inv_rpow (pow_nonneg hp0 m)]
+  rw [← Real.rpow_natCast]
+  rw [← Real.rpow_mul hp0]
+  rw [← Real.rpow_neg hp0]
+  congr 1
+  ring
+
 /-- The stable and unrestricted adelic moduli are genuinely different:
 full adelic modulus is 1, while the stable transverse modulus is `p^{-m}`. -/
 theorem full_vs_stable_transverse_modulus
