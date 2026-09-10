@@ -66,7 +66,8 @@ theorem stable_after_positive_return
 theorem stableTransverseReturn_scalar_modulus
     (p m : ℕ) (hp : Nat.Prime p) :
     padicNorm p ((primePowerUnit p m hp : ℚˣ) : ℚ) = ((p : ℚ) ^ m)⁻¹ := by
-  simpa using padic_negativeReturnCompensator p m hp
+  change padicNorm p ((p : ℚ) ^ m) = ((p : ℚ) ^ m)⁻¹
+  exact padic_return_modulus_eq_inv_pow p m hp
 
 /-- The positive-time return has the reciprocal p-adic modulus `p^m`. -/
 theorem positiveTransverseReturn_scalar_modulus
@@ -79,7 +80,8 @@ theorem positiveTransverseReturn_scalar_modulus
 theorem stableTransverseReturn_off_diagonal
     (p q m : ℕ) (hp : Nat.Prime p) (hq : Nat.Prime q) (hqp : q ≠ p) :
     padicNorm q ((primePowerUnit p m hp : ℚˣ) : ℚ) = 1 := by
-  simpa using padic_negativeReturnCompensator_off_diagonal p q m hp hq hqp
+  change padicNorm q ((p : ℚ) ^ m) = 1
+  exact padic_off_diagonal_pow_unit p q m hp hq hqp
 
 /-- G4 transverse-map summary: the stable return is invertible, has modulus
 `p^{-m}` at `p`, and modulus one at every other prime. -/
