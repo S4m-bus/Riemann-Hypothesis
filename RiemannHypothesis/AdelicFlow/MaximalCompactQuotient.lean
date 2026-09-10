@@ -49,7 +49,10 @@ theorem maxCompactAdele_mul (k l : MaxCompactFiniteUnit) :
     maxCompactAdele (k * l) = maxCompactAdele k * maxCompactAdele l := by
   apply IsDedekindDomain.FiniteAdeleRing.ext
   intro v
-  rw [RestrictedProduct.mul_apply]
+  change
+    (((↑((k * l) v) : v.adicCompletionIntegers ℚ) : v.adicCompletion ℚ)) =
+      (((↑(k v) : v.adicCompletionIntegers ℚ) : v.adicCompletion ℚ) *
+       ((↑(l v) : v.adicCompletionIntegers ℚ) : v.adicCompletion ℚ))
   rfl
 
 /-- Inverses in the local unit product cancel on the finite adele image. -/
@@ -147,7 +150,7 @@ def maxCompactSetoid : Setoid PrincipalQuotient where
   iseqv := ⟨maxCompactEquivalent_refl, maxCompactEquivalent_symm,
     maxCompactEquivalent_trans⟩
 
-/-- The set-level quotient `(ℚˣ \ 𝔸_ℚ) / K_f`. -/
+/-- The set-level quotient `(ℚˣ \\ 𝔸_ℚ) / K_f`. -/
 abbrev ScalingSiteQuotient : Type := Quotient maxCompactSetoid
 
 def toScalingSiteQuotient (x : PrincipalQuotient) : ScalingSiteQuotient :=
