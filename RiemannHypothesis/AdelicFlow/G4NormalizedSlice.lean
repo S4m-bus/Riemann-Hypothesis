@@ -47,14 +47,19 @@ theorem stableCorrectedGlobalReturn_on_normalizedSlice
       normalizedArchimedeanSlice (stableTransverseReturn p m hp y) := by
   apply Prod.ext
   · funext v
-    apply (ratRealCoordinate v).injective
     have hpR : ((p : ℝ) ^ m) ≠ 0 := by
       exact pow_ne_zero _ (by exact_mod_cast hp.ne_zero)
-    simp [stableCorrectedGlobalReturn, normalizedArchimedeanSlice,
+    simp only [stableCorrectedGlobalReturn, normalizedArchimedeanSlice,
       globalScale, infiniteScale, archimedeanGlobalFlow,
-      rationalInfiniteRealFlow, infiniteExpAdele, primePowerUnit,
-      NumberField.InfiniteAdeleRing.algebraMap_apply,
-      exp_negativePrimeReturnTime p m hp, hpR]
+      rationalInfiniteRealFlow, primePowerUnit,
+      NumberField.InfiniteAdeleRing.algebraMap_apply, mul_one]
+    change ((p : v.Completion) ^ m) *
+        (ratRealCoordinate v).symm (Real.exp (negativePrimeReturnTime p m)) = 1
+    apply (ratRealCoordinate v).injective
+    rw [map_mul, map_pow, map_natCast]
+    simp only [RingEquiv.apply_symm_apply, map_one]
+    rw [exp_negativePrimeReturnTime p m hp]
+    exact mul_inv_cancel₀ hpR
   · rfl
 
 /-- Principal rational scaling does not change a scaling-site class. -/
