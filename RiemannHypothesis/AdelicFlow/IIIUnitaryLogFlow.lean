@@ -60,7 +60,9 @@ translation depends continuously on time. -/
 theorem logUnitaryFlow_strongContinuous (f : LogHilbert) :
     Continuous (fun t : ℝ => logUnitaryFlow t f) := by
   change Continuous (fun t : ℝ => DomAddAct.mk t +ᵥ f)
-  exact continuous_vadd.comp (DomAddAct.continuous_mk.prod_mk continuous_const)
+  exact continuous_vadd.comp
+    (continuous_prod_mk (fun t : ℝ => DomAddAct.mk t) (fun _ : ℝ => f)
+      DomAddAct.continuous_mk continuous_const)
 
 /-! ## The exact unbounded Number III target
 
