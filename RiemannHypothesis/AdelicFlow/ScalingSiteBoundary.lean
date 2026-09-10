@@ -19,8 +19,6 @@ object is a point/component whose stabilizer is a discrete cyclic lattice
 `Tℤ`.  Prime circles have precisely the stabilizer `(log p)ℤ`.
 -/
 
-/-- Interface for a scaling-site quotient carrying the descended real scaling
-flow. -/
 structure ScalingSiteQuotientBoundary where
   X : Type
   project : PrincipalQuotient → X
@@ -45,9 +43,8 @@ def LiesOnClosedPrimitiveOrbit (S : ScalingSiteQuotientBoundary)
     (y : S.X) : Prop :=
   ∃ T : ℝ, HasCyclicStabilizer S y T
 
-/-- Complete G3 bridge obligation.  It asks that the explicit prime circles
-embed equivariantly and exhaust the cyclic-stabilizer (closed-orbit) locus,
-not every point with an isolated positive return. -/
+/-- Complete G3 bridge obligation: prime circles embed equivariantly and exhaust
+the cyclic-stabilizer closed-orbit locus. -/
 structure G3ScalingSiteBridge where
   site : ScalingSiteQuotientBoundary
   embedPeriodicSector : PrimePeriodicSector → site.X
@@ -68,18 +65,24 @@ def IsEmbeddedPrimePeriod (G : G3ScalingSiteBridge)
     G.site.flow t (G.embedPeriodicSector ⟨p, x⟩) =
       G.embedPeriodicSector ⟨p, x⟩
 
-/-- Injectivity and intertwining make the global embedded period condition
-exactly equivalent to the already proved local circle period condition. -/
+/-- Injectivity and intertwining make the embedded period condition exactly the
+local circle period condition. -/
 theorem G3ScalingSiteBridge.embeddedPrimePeriod_iff
     (G : G3ScalingSiteBridge) (p : PrimeLabel) (t : ℝ) :
     IsEmbeddedPrimePeriod G p t ↔ IsPrimeOrbitPeriod p t := by
   constructor
   · intro h x
-    apply G.embed_injective
-    rw [G.intertwining]
-    exact h x
+    have hsigma :
+        primePeriodicSectorFlow t (⟨p, x⟩ : PrimePeriodicSector) =
+          (⟨p, x⟩ : PrimePeriodicSector) := by
+      apply G.embed_injective
+      rw [G.intertwining]
+      exact h x
+    simpa [primePeriodicSectorFlow] using hsigma
   · intro h x
-    rw [← G.intertwining, h x]
+    rw [← G.intertwining]
+    apply congrArg G.embedPeriodicSector
+    simpa [primePeriodicSectorFlow] using h x
 
 /-- Primitive positive period for an embedded global prime circle. -/
 def IsPrimitiveEmbeddedPrimePeriod (G : G3ScalingSiteBridge)
@@ -99,8 +102,8 @@ theorem G3ScalingSiteBridge.primePeriod_isPrimitive
     apply hlocal.2.2 s hs
     exact (G.embeddedPrimePeriod_iff p s).1 hperiod
 
-/-- Under the corrected bridge, every point on a genuine closed primitive orbit
-has a representative in a prime circle. -/
+/-- Every point on a genuine closed primitive orbit has a prime-circle
+representative. -/
 theorem G3ScalingSiteBridge.closed_orbit_has_prime_representative
     (G : G3ScalingSiteBridge) (y : G.site.X)
     (hy : LiesOnClosedPrimitiveOrbit G.site y) :
@@ -109,8 +112,8 @@ theorem G3ScalingSiteBridge.closed_orbit_has_prime_representative
   rcases G.closedOrbitExhaustion y hy with ⟨x, hx⟩
   exact ⟨x, hx, periodicSector_label_prime x⟩
 
-/-- Correct G3 package: prime fibers have exact primitive length `log p`, and
-all cyclic-stabilizer closed orbits are exhausted by those prime fibers. -/
+/-- Correct G3 package: prime fibers have primitive length `log p`, and all
+cyclic-stabilizer closed orbits are exhausted by those prime fibers. -/
 theorem G3ScalingSiteBridge.G3_prime_orbit_package
     (G : G3ScalingSiteBridge) :
     (∀ p : PrimeLabel,
