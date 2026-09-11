@@ -50,8 +50,8 @@ theorem coordinateOperator_schwartz (f : SchwartzMap ℝ ℂ) :
   rw [hQ, hcoord, coordinateSchwartz_apply]
   simp [coordinateWeighted, fCoord, hf]
 
-/-- The opaque project name `logFourierUnitary` is exactly mathlib's Plancherel
-Fourier transform on a Schwartz `L²` vector. -/
+/-- The project name `logFourierUnitary` is exactly mathlib's Plancherel Fourier
+transform on a Schwartz `L²` vector. -/
 @[simp]
 theorem logFourierUnitary_schwartz_toLp (f : SchwartzMap ℝ ℂ) :
     logFourierUnitary (f.toLp 2 volume) = (𝓕 f).toLp 2 volume := by
@@ -75,6 +75,17 @@ theorem schwartz_toLp_mem_logGeneratorDomain (f : SchwartzMap ℝ ℂ) :
   change f.toLp 2 volume ∈ logGeneratorDomain
   exact schwartz_toLp_mem_logGeneratorSubmodule f
 
+/-- A packaged Schwartz vector in the maximal generator domain.  Keeping this
+subtype witness opaque prevents later theorem statements from repeatedly reducing
+the full transported-domain proof. -/
+def schwartzLogGeneratorVector (f : SchwartzMap ℝ ℂ) : logGenerator.domain :=
+  ⟨f.toLp 2 volume, schwartz_toLp_mem_logGeneratorDomain f⟩
+
+@[simp]
+theorem schwartzLogGeneratorVector_coe (f : SchwartzMap ℝ ℂ) :
+    (schwartzLogGeneratorVector f : LogHilbert) = f.toLp 2 volume := by
+  rfl
+
 /-- Fourier transform of `-i ∂q f` is exactly multiplication by `2π ξ`. -/
 theorem fourier_logMomentumSchwartz (f : SchwartzMap ℝ ℂ) :
     𝓕 (logMomentumSchwartz f) = fourierScale • coordinateSchwartz (𝓕 f) := by
@@ -90,38 +101,34 @@ theorem fourier_logMomentumSchwartz (f : SchwartzMap ℝ ℂ) :
   rw [Complex.I_sq]
   ring
 
+/-- The restricted Fourier-domain map sends a packaged Schwartz vector to the
+Fourier-transformed Schwartz vector in the multiplier domain. -/
+theorem logGeneratorFourierDomainMap_schwartz (f : SchwartzMap ℝ ℂ) :
+    (logGeneratorFourierDomainMap (schwartzLogGeneratorVector f) : LogHilbert) =
+      (𝓕 f).toLp 2 volume := by
+  rw [logGeneratorFourierDomainMap_coe]
+  rw [schwartzLogGeneratorVector_coe]
+  exact logFourierUnitary_schwartz_toLp f
+
 /-- Exact theorem-level identification of the abstract self-adjoint generator
 with `-i d/dq` on Schwartz functions. -/
 theorem logGenerator_eq_negI_deriv_on_schwartz (f : SchwartzMap ℝ ℂ) :
-    logGenerator
-        ⟨f.toLp 2 volume, schwartz_toLp_mem_logGeneratorDomain f⟩ =
+    logGenerator (schwartzLogGeneratorVector f) =
       (logMomentumSchwartz f).toLp 2 volume := by
-  let fDom : logGeneratorDomain :=
-    ⟨f.toLp 2 volume, schwartz_toLp_mem_logGeneratorSubmodule f⟩
-  let fLog : logGenerator.domain := by
-    change logGeneratorDomain
-    exact fDom
-  change logGenerator fLog = (logMomentumSchwartz f).toLp 2 volume
   apply logFourierUnitary.injective
+  rw [fourier_logGenerator (schwartzLogGeneratorVector f)]
+  rw [logFourierUnitary_schwartz_toLp]
 
   have hFmem : (𝓕 f).toLp 2 volume ∈ scaledCoordinateOperator.domain := by
     rw [scaledCoordinateOperator_domain]
     change (𝓕 f).toLp 2 volume ∈ coordinateDomain
     exact schwartz_toLp_mem_coordinateDomain (𝓕 f)
-  have hMapDom :
-      logGeneratorFourierDomainMap fDom =
+  have hMap :
+      logGeneratorFourierDomainMap (schwartzLogGeneratorVector f) =
         ⟨(𝓕 f).toLp 2 volume, hFmem⟩ := by
     apply Subtype.ext
-    rw [logGeneratorFourierDomainMap_coe]
-    exact logFourierUnitary_schwartz_toLp f
-  have hMapLog :
-      logGeneratorFourierDomainMap fLog =
-        ⟨(𝓕 f).toLp 2 volume, hFmem⟩ := by
-    change logGeneratorFourierDomainMap fDom = _
-    exact hMapDom
-
-  rw [fourier_logGenerator fLog, hMapLog]
-  rw [logFourierUnitary_schwartz_toLp]
+    exact logGeneratorFourierDomainMap_schwartz f
+  rw [hMap]
   rw [scaledCoordinateOperator_apply]
 
   have hQ : coordinateOperator
@@ -131,13 +138,12 @@ theorem logGenerator_eq_negI_deriv_on_schwartz (f : SchwartzMap ℝ ℂ) :
   rw [hQ, fourier_logMomentumSchwartz]
   rfl
 
-/-- The local Number III operator is therefore self-adjoint and has the expected
+/-- The local Number III operator is self-adjoint and has the expected
 `-i ∂q` action on the dense Schwartz test domain. -/
 theorem logGenerator_local_boundary_sealed :
     IsSelfAdjoint logGenerator ∧
       (∀ f : SchwartzMap ℝ ℂ,
-        logGenerator
-            ⟨f.toLp 2 volume, schwartz_toLp_mem_logGeneratorDomain f⟩ =
+        logGenerator (schwartzLogGeneratorVector f) =
           (logMomentumSchwartz f).toLp 2 volume) := by
   exact ⟨logGenerator_selfAdjoint, logGenerator_eq_negI_deriv_on_schwartz⟩
 
