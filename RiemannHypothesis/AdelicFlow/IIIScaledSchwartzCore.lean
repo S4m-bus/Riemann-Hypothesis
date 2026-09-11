@@ -61,6 +61,7 @@ def coordinateGraphScaleCLM :
 @[simp]
 theorem coordinateGraphScaleCLM_apply (z : LogHilbert × LogHilbert) :
     coordinateGraphScaleCLM z = (z.1, fourierScale • z.2) := by
+  rcases z with ⟨x, y⟩
   simp [coordinateGraphScaleCLM]
 
 /-- The graph scaling map sends the Schwartz-restricted graph of `Q` into the
@@ -151,8 +152,9 @@ theorem scaledCoordinateOperator_graph_le_schwartzGraphClosure :
           Set (LogHilbert × LogHilbert)) :=
     closure_mono hsubset hImage
   have hparam := coordinateGraphScaleCLM_on_scaledDomain u
-  change q = scaledDomainToCoordinate u at hparam
-  rw [← hparam] at hImage'
+  change coordinateGraphScaleCLM ((q : LogHilbert), coordinateOperator q) =
+      ((u : LogHilbert), scaledCoordinateOperator u) at hparam
+  rw [hparam] at hImage'
   change ((u : LogHilbert), scaledCoordinateOperator u) ∈
     (scaledCoordinateOperatorSchwartzRestriction.graph.topologicalClosure :
       Set (LogHilbert × LogHilbert))
