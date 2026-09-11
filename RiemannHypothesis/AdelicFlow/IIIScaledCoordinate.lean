@@ -26,7 +26,8 @@ theorem fourierScale_ne_zero : fourierScale ≠ 0 := by
 
 @[simp]
 theorem conj_fourierScale : conj fourierScale = fourierScale := by
-  simp [fourierScale]
+  unfold fourierScale
+  exact Complex.conj_ofReal (2 * Real.pi)
 
 @[simp]
 theorem conj_fourierScale_inv : conj (fourierScale⁻¹) = fourierScale⁻¹ := by
@@ -50,7 +51,9 @@ theorem scaledCoordinateOperator_apply (f : scaledCoordinateOperator.domain) :
 /-- `2π Q` has the same dense maximal domain as `Q`. -/
 theorem scaledCoordinateDomain_dense :
     Dense (scaledCoordinateOperator.domain : Set LogHilbert) := by
-  simpa [scaledCoordinateOperator] using coordinateDomain_dense
+  change Dense (coordinateOperator.domain : Set LogHilbert)
+  change Dense (coordinateDomain : Set LogHilbert)
+  exact coordinateDomain_dense
 
 /-- A nonzero real scalar multiple of the symmetric coordinate operator remains symmetric. -/
 theorem scaledCoordinateOperator_isFormalAdjoint :
