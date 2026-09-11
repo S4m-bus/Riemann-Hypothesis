@@ -113,4 +113,73 @@ theorem coord_mul_minusResolventMultiplier (x : ℝ) :
         Complex.I * minusResolventMultiplier x := by ring
     _ = 1 + Complex.I * minusResolventMultiplier x := by rw [h]
 
+/-! ## Maximal coordinate multiplication operator
+
+The Fourier-side operator is multiplication by the real coordinate.  Its maximal
+domain consists exactly of those `L²` classes for which multiplication by the
+coordinate is again in `L²`.
+-/
+
+/-- A representative of coordinate multiplication on an `L²` class. -/
+def coordinateWeighted (f : LogHilbert) : ℝ → ℂ :=
+  fun x => (x : ℂ) * f x
+
+/-- Maximal `L²` domain of multiplication by the real coordinate. -/
+def coordinateDomain : Submodule ℂ LogHilbert where
+  carrier := {f | MemLp (coordinateWeighted f) 2 volume}
+  zero_mem' := by
+    apply MemLp.ae_eq ?_ (MemLp.zero)
+    filter_upwards [Lp.coeFn_zero ℂ 2 volume] with x hx
+    simp [coordinateWeighted, hx]
+  add_mem' {f g} hf hg := by
+    apply MemLp.ae_eq ?_ (hf.add hg)
+    filter_upwards [Lp.coeFn_add f g] with x hx
+    simp [coordinateWeighted, hx, mul_add]
+  smul_mem' c f hf := by
+    apply MemLp.ae_eq ?_ (hf.const_smul c)
+    filter_upwards [Lp.coeFn_smul c f] with x hx
+    simp [coordinateWeighted, hx, smul_eq_mul]
+    ring
+
+/-- Coordinate multiplication as an `L²` vector on its maximal domain. -/
+def coordinateApply (f : coordinateDomain) : LogHilbert :=
+  f.property.toLp (coordinateWeighted f.1)
+
+@[simp]
+theorem coordinateApply_add (f g : coordinateDomain) :
+    coordinateApply (f + g) = coordinateApply f + coordinateApply g := by
+  unfold coordinateApply
+  rw [← MemLp.toLp_add]
+  apply MemLp.toLp_congr
+  filter_upwards [Lp.coeFn_add f.1 g.1] with x hx
+  simp [coordinateWeighted, hx, mul_add]
+
+@[simp]
+theorem coordinateApply_smul (c : ℂ) (f : coordinateDomain) :
+    coordinateApply (c • f) = c • coordinateApply f := by
+  unfold coordinateApply
+  rw [← MemLp.toLp_const_smul]
+  apply MemLp.toLp_congr
+  filter_upwards [Lp.coeFn_smul c f.1] with x hx
+  simp [coordinateWeighted, hx, smul_eq_mul]
+  ring
+
+/-- The maximal unbounded multiplication operator `Q f(x) = x f(x)`. -/
+def coordinateOperator : LogHilbert →ₗ.[ℂ] LogHilbert where
+  domain := coordinateDomain
+  toFun :=
+    { toFun := coordinateApply
+      map_add' := coordinateApply_add
+      map_smul' := coordinateApply_smul }
+
+/-- On representatives, the operator really is multiplication by the coordinate. -/
+theorem coordinateApply_ae (f : coordinateDomain) :
+    (coordinateApply f : ℝ → ℂ) =ᵐ[volume] coordinateWeighted f.1 := by
+  exact MemLp.coeFn_toLp f.property
+
+@[simp]
+theorem coordinateOperator_apply (f : coordinateOperator.domain) :
+    coordinateOperator f = coordinateApply f := by
+  rfl
+
 end RiemannHypothesis.AdelicFlow
