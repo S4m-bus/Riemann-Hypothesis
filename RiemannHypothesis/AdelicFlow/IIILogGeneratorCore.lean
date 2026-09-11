@@ -10,7 +10,7 @@ open LineDeriv
 namespace RiemannHypothesis.AdelicFlow
 
 /-!
-# Number III: identification with `-i ∂q` on the Schwartz core
+# Number III: identification with `-i ∂q` on the Schwartz test domain
 
 The operator `logGenerator` was defined abstractly by the exact unitary conjugation
 `F⁻¹ (2π Q) F`.  Here we identify that operator on the dense Schwartz test domain
@@ -83,6 +83,7 @@ theorem fourier_logMomentumSchwartz (f : SchwartzMap ℝ ℂ) :
   have hg : (fun x : ℝ => inner ℝ x (1 : ℝ)).HasTemperateGrowth := by
     fun_prop
   ext x
+  simp only [smul_apply]
   rw [SchwartzMap.smulLeftCLM_apply_apply hg]
   simp [coordinateSchwartz_apply, fourierScale, smul_eq_mul, Complex.I_sq]
   ring
