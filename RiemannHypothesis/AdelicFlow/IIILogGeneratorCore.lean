@@ -85,7 +85,8 @@ theorem fourier_logMomentumSchwartz (f : SchwartzMap ℝ ℂ) :
   ext x
   simp only [smul_apply]
   rw [SchwartzMap.smulLeftCLM_apply_apply hg]
-  simp [coordinateSchwartz_apply, fourierScale, smul_eq_mul, Complex.I_sq]
+  simp [coordinateSchwartz_apply, fourierScale, smul_eq_mul]
+  rw [Complex.I_sq]
   ring
 
 /-- Exact theorem-level identification of the abstract self-adjoint generator
