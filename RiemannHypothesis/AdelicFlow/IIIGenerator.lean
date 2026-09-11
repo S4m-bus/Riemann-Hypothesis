@@ -136,34 +136,49 @@ def coordinateDomain : Submodule ℂ LogHilbert where
   add_mem' {f g} hf hg := by
     apply MemLp.ae_eq ?_ (hf.add hg)
     filter_upwards [Lp.coeFn_add f g] with x hx
-    simp [coordinateWeighted, hx, mul_add]
+    change (x : ℂ) * f x + (x : ℂ) * g x = (x : ℂ) * (f + g) x
+    rw [hx]
+    simp [mul_add]
   smul_mem' c f hf := by
     apply MemLp.ae_eq ?_ (hf.const_smul c)
     filter_upwards [Lp.coeFn_smul c f] with x hx
-    simp [coordinateWeighted, hx, smul_eq_mul]
+    change c * ((x : ℂ) * f x) = (x : ℂ) * (c • f) x
+    rw [hx]
+    simp [smul_eq_mul]
     ring
 
 /-- Coordinate multiplication as an `L²` vector on its maximal domain. -/
 def coordinateApply (f : coordinateDomain) : LogHilbert :=
   f.property.toLp (coordinateWeighted f.1)
 
+/-- On representatives, coordinate application is literally multiplication by `x`. -/
+theorem coordinateApply_ae (f : coordinateDomain) :
+    (coordinateApply f : ℝ → ℂ) =ᵐ[volume] coordinateWeighted f.1 := by
+  exact MemLp.coeFn_toLp f.property
+
 @[simp]
 theorem coordinateApply_add (f g : coordinateDomain) :
     coordinateApply (f + g) = coordinateApply f + coordinateApply g := by
-  unfold coordinateApply
-  rw [← MemLp.toLp_add]
-  apply MemLp.toLp_congr
-  filter_upwards [Lp.coeFn_add f.1 g.1] with x hx
-  simp [coordinateWeighted, hx, mul_add]
+  rw [Lp.ext_iff]
+  filter_upwards [coordinateApply_ae (f + g), coordinateApply_ae f,
+    coordinateApply_ae g, Lp.coeFn_add (coordinateApply f) (coordinateApply g),
+    Lp.coeFn_add f.1 g.1] with x hfg hf hg hsum hbase
+  rw [hfg, hsum, hf, hg]
+  change (x : ℂ) * (f + g : coordinateDomain).1 x =
+    (x : ℂ) * f.1 x + (x : ℂ) * g.1 x
+  rw [hbase]
+  ring
 
 @[simp]
 theorem coordinateApply_smul (c : ℂ) (f : coordinateDomain) :
     coordinateApply (c • f) = c • coordinateApply f := by
-  unfold coordinateApply
-  rw [← MemLp.toLp_const_smul]
-  apply MemLp.toLp_congr
-  filter_upwards [Lp.coeFn_smul c f.1] with x hx
-  simp [coordinateWeighted, hx, smul_eq_mul]
+  rw [Lp.ext_iff]
+  filter_upwards [coordinateApply_ae (c • f), coordinateApply_ae f,
+    Lp.coeFn_smul c (coordinateApply f), Lp.coeFn_smul c f.1] with x hcf hf hsum hbase
+  rw [hcf, hsum, hf]
+  change (x : ℂ) * (c • f : coordinateDomain).1 x = c * ((x : ℂ) * f.1 x)
+  rw [hbase]
+  simp [smul_eq_mul]
   ring
 
 /-- The maximal unbounded multiplication operator `Q f(x) = x f(x)`. -/
@@ -173,11 +188,6 @@ def coordinateOperator : LogHilbert →ₗ.[ℂ] LogHilbert where
     { toFun := coordinateApply
       map_add' := coordinateApply_add
       map_smul' := coordinateApply_smul }
-
-/-- On representatives, the operator really is multiplication by the coordinate. -/
-theorem coordinateApply_ae (f : coordinateDomain) :
-    (coordinateApply f : ℝ → ℂ) =ᵐ[volume] coordinateWeighted f.1 := by
-  exact MemLp.coeFn_toLp f.property
 
 @[simp]
 theorem coordinateOperator_apply (f : coordinateOperator.domain) :
