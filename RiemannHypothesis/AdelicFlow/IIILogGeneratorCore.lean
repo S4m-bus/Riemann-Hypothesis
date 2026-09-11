@@ -86,6 +86,7 @@ theorem fourier_logMomentumSchwartz (f : SchwartzMap ℝ ℂ) :
   simp only [smul_apply]
   rw [SchwartzMap.smulLeftCLM_apply_apply hg]
   simp [coordinateSchwartz_apply, fourierScale, smul_eq_mul]
+  ring_nf
   rw [Complex.I_sq]
   ring
 
