@@ -66,6 +66,24 @@ theorem logGeneratorSchwartzRestriction_isClosable :
   exact logGenerator_selfAdjoint.isClosed.isClosable.leIsClosable
     logGeneratorSchwartzRestriction_le_logGenerator
 
+/-- A self-adjoint maximal generator is already equal to its operator closure. -/
+theorem logGenerator_closure_eq :
+    logGenerator.closure = logGenerator := by
+  apply LinearPMap.eq_of_eq_graph
+  have hc : logGenerator.IsClosable := logGenerator_selfAdjoint.isClosed.isClosable
+  rw [← hc.graph_closure_eq_closure_graph]
+  exact logGenerator_selfAdjoint.isClosed.submodule_topologicalClosure_eq
+
+/-- Closing the Schwartz restriction cannot produce anything outside the maximal
+self-adjoint logarithmic generator. -/
+theorem logGeneratorSchwartzClosure_le_logGenerator :
+    logGeneratorSchwartzRestriction.closure ≤ logGenerator := by
+  have h :=
+    (logGenerator_selfAdjoint.isClosed.isClosable).closure_mono
+      logGeneratorSchwartzRestriction_le_logGenerator
+  rw [logGenerator_closure_eq] at h
+  exact h
+
 /-- The exact remaining graph-core obligation.  Since containment in the maximal
 domain is already proved above, `HasCore` is now equivalent to the single closure
 equality for the Schwartz restriction. -/
