@@ -23,6 +23,7 @@ theorem logFourierUnitary_mem_logSchwartzSubmodule
   change u ∈ LinearMap.range
     (SchwartzMap.toLpCLM ℂ (E := ℝ) ℂ 2 volume).toLinearMap at hu
   rcases hu with ⟨f, rfl⟩
+  simp only [SchwartzMap.toLpCLM_apply]
   rw [logFourierUnitary_schwartz_toLp]
   change (𝓕 f).toLp 2 volume ∈ LinearMap.range
     (SchwartzMap.toLpCLM ℂ (E := ℝ) ℂ 2 volume).toLinearMap
@@ -35,6 +36,7 @@ theorem logFourierUnitary_symm_mem_logSchwartzSubmodule
   change u ∈ LinearMap.range
     (SchwartzMap.toLpCLM ℂ (E := ℝ) ℂ 2 volume).toLinearMap at hu
   rcases hu with ⟨f, rfl⟩
+  simp only [SchwartzMap.toLpCLM_apply]
   have hInv :
       logFourierUnitary.symm (f.toLp 2 volume) =
         (𝓕⁻ f).toLp 2 volume := by
@@ -114,7 +116,6 @@ theorem logFourierInvGraphEquiv_mem_logSchwartzGraph
     rfl
   have hInvU : logFourierUnitary.symm (s : LogHilbert) = (u : LogHilbert) := by
     rw [← hFu]
-    exact logFourierUnitary.symm_apply_apply _
   have huS : (u : LogHilbert) ∈ logSchwartzSubmodule := by
     rw [← hInvU]
     exact logFourierUnitary_symm_mem_logSchwartzSubmodule hsS
