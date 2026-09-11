@@ -16,8 +16,8 @@ The local generator itself is now sealed: it is self-adjoint and agrees with
 stronger statement that Schwartz functions form a graph core.
 
 This file packages the exact Schwartz `L²` submodule, proves that it lies in the
-maximal domain, and isolates the remaining core equality in mathlib's native
-`LinearPMap.HasCore` language.
+maximal domain and is dense in the ambient Hilbert space, and isolates the
+remaining core equality in mathlib's native `LinearPMap.HasCore` language.
 -/
 
 /-- The complex-linear submodule of `L²(ℝ)` represented by Schwartz functions. -/
@@ -34,6 +34,21 @@ theorem logSchwartzSubmodule_le_logGeneratorDomain :
   rcases hu with ⟨f, rfl⟩
   change f.toLp 2 volume ∈ logGenerator.domain
   exact schwartz_toLp_mem_logGeneratorDomain f
+
+/-- Schwartz vectors are dense in the ambient logarithmic Hilbert space.  This
+is ordinary Hilbert-space density; the stronger graph-density statement is the
+remaining core obligation below. -/
+theorem logSchwartzSubmodule_dense :
+    Dense (logSchwartzSubmodule : Set LogHilbert) := by
+  have hd :
+      DenseRange (SchwartzMap.toLpCLM ℝ (E := ℝ) ℂ 2 volume) :=
+    SchwartzMap.denseRange_toLpCLM ENNReal.ofNat_ne_top
+  apply hd.mono
+  rintro u ⟨f, rfl⟩
+  change f.toLp 2 volume ∈ logSchwartzSubmodule
+  change f.toLp 2 volume ∈ LinearMap.range
+    (SchwartzMap.toLpCLM ℂ (E := ℝ) ℂ 2 volume).toLinearMap
+  exact ⟨f, rfl⟩
 
 /-- Restriction of the maximal self-adjoint generator to Schwartz `L²` vectors. -/
 def logGeneratorSchwartzRestriction : LogHilbert →ₗ.[ℂ] LogHilbert :=
