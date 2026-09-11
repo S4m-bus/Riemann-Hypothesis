@@ -224,6 +224,120 @@ theorem coordinateGraphResolventCLM_on_coordinateDomain
   rw [coordinateGraphResolventCLM_apply, plusResolventCLM_coordinate_plus_I]
   simp
 
+/-- Every point produced by the resolvent graph map belongs to the maximal graph of `Q`. -/
+theorem coordinateGraphResolventCLM_mem_coordinateOperator_graph (g : LogHilbert) :
+    coordinateGraphResolventCLM g ∈ coordinateOperator.graph := by
+  rw [LinearPMap.mem_graph_iff']
+  refine ⟨plusResolventDomain g, ?_⟩
+  rw [coordinateGraphResolventCLM_apply]
+  apply Prod.ext
+  · exact (plusResolventCLM_eq_plusResolventVector g).symm
+  · rw [plusResolventCLM_eq_plusResolventVector]
+    exact eq_sub_of_add_eq (plusResolvent_equation g)
+
+/-- On a Schwartz input, the resolvent graph map lands in the graph of the
+Schwartz restriction of `Q`. -/
+theorem coordinateGraphResolventCLM_mem_coordinateSchwartzGraph
+    {g : LogHilbert} (hg : g ∈ logSchwartzSubmodule) :
+    coordinateGraphResolventCLM g ∈ coordinateOperatorSchwartzRestriction.graph := by
+  change g ∈ LinearMap.range
+    (SchwartzMap.toLpCLM ℂ (E := ℝ) ℂ 2 volume).toLinearMap at hg
+  rcases hg with ⟨f, rfl⟩
+  have hS : plusResolventCLM (f.toLp 2 volume) ∈ logSchwartzSubmodule := by
+    rw [plusResolventCLM_schwartz_toLp]
+    change (plusResolventSchwartz f).toLp 2 volume ∈ LinearMap.range
+      (SchwartzMap.toLpCLM ℂ (E := ℝ) ℂ 2 volume).toLinearMap
+    exact ⟨plusResolventSchwartz f, rfl⟩
+  have hD : plusResolventCLM (f.toLp 2 volume) ∈ coordinateOperator.domain := by
+    rw [plusResolventCLM_eq_plusResolventVector]
+    exact plusResolventVector_mem_coordinateDomain (f.toLp 2 volume)
+  rw [LinearPMap.mem_graph_iff']
+  let r : coordinateOperatorSchwartzRestriction.domain :=
+    ⟨plusResolventCLM (f.toLp 2 volume), by
+      change plusResolventCLM (f.toLp 2 volume) ∈
+        logSchwartzSubmodule ⊓ coordinateOperator.domain
+      exact ⟨hS, hD⟩⟩
+  refine ⟨r, ?_⟩
+  rw [coordinateGraphResolventCLM_apply]
+  apply Prod.ext
+  · rfl
+  · change coordinateOperator
+        ⟨plusResolventCLM (f.toLp 2 volume), hD⟩ =
+      f.toLp 2 volume - Complex.I • plusResolventCLM (f.toLp 2 volume)
+    rw [plusResolventCLM_eq_plusResolventVector]
+    exact eq_sub_of_add_eq (plusResolvent_equation (f.toLp 2 volume))
+
+/-- The maximal coordinate graph lies in the closure of its Schwartz-restricted graph. -/
+theorem coordinateOperator_graph_le_schwartzGraphClosure :
+    coordinateOperator.graph ≤
+      coordinateOperatorSchwartzRestriction.graph.topologicalClosure := by
+  intro z hz
+  rw [LinearPMap.mem_graph_iff'] at hz
+  rcases hz with ⟨u, rfl⟩
+  let g : LogHilbert := coordinateOperator u + Complex.I • (u : LogHilbert)
+  have hg : g ∈ closure (logSchwartzSubmodule : Set LogHilbert) := by
+    rw [logSchwartzSubmodule_dense.closure_eq]
+    exact Set.mem_univ g
+  have hT :
+      coordinateGraphResolventCLM g ∈
+        closure (coordinateGraphResolventCLM ''
+          (logSchwartzSubmodule : Set LogHilbert)) := by
+    apply image_closure_subset_closure_image coordinateGraphResolventCLM.continuous
+    exact ⟨g, hg, rfl⟩
+  have hsubset :
+      coordinateGraphResolventCLM '' (logSchwartzSubmodule : Set LogHilbert) ⊆
+        (coordinateOperatorSchwartzRestriction.graph : Set (LogHilbert × LogHilbert)) := by
+    rintro _ ⟨s, hs, rfl⟩
+    exact coordinateGraphResolventCLM_mem_coordinateSchwartzGraph hs
+  have hT' :
+      coordinateGraphResolventCLM g ∈
+        closure (coordinateOperatorSchwartzRestriction.graph : Set (LogHilbert × LogHilbert)) :=
+    closure_mono hsubset hT
+  have hparam := coordinateGraphResolventCLM_on_coordinateDomain u
+  rw [hparam] at hT'
+  simpa only [Submodule.topologicalClosure_coe] using hT'
+
+/-- The coordinate Schwartz restriction is closable, since maximal `Q` is closed. -/
+theorem coordinateOperatorSchwartzRestriction_isClosable :
+    coordinateOperatorSchwartzRestriction.IsClosable := by
+  exact coordinateOperator_selfAdjoint.isClosed.isClosable.leIsClosable
+    coordinateOperatorSchwartzRestriction_le_coordinateOperator
+
+/-- The self-adjoint maximal coordinate operator is equal to its own closure. -/
+theorem coordinateOperator_closure_eq :
+    coordinateOperator.closure = coordinateOperator := by
+  apply LinearPMap.eq_of_eq_graph
+  have hc : coordinateOperator.IsClosable :=
+    coordinateOperator_selfAdjoint.isClosed.isClosable
+  rw [← hc.graph_closure_eq_closure_graph]
+  exact coordinateOperator_selfAdjoint.isClosed.submodule_topologicalClosure_eq
+
+/-- Closing the Schwartz restriction cannot exceed the maximal coordinate operator. -/
+theorem coordinateOperatorSchwartzClosure_le_coordinateOperator :
+    coordinateOperatorSchwartzRestriction.closure ≤ coordinateOperator := by
+  have h :=
+    (coordinateOperator_selfAdjoint.isClosed.isClosable).closure_mono
+      coordinateOperatorSchwartzRestriction_le_coordinateOperator
+  rw [coordinateOperator_closure_eq] at h
+  exact h
+
+/-- Conversely, graph-density forces the maximal coordinate operator into the
+closure of its Schwartz restriction. -/
+theorem coordinateOperator_le_coordinateOperatorSchwartzClosure :
+    coordinateOperator ≤ coordinateOperatorSchwartzRestriction.closure := by
+  apply LinearPMap.le_of_le_graph
+  rw [← coordinateOperatorSchwartzRestriction_isClosable.graph_closure_eq_closure_graph]
+  exact coordinateOperator_graph_le_schwartzGraphClosure
+
+/-- Schwartz functions form a graph core for the maximal coordinate operator `Q`. -/
+theorem coordinateOperator_hasSchwartzCore :
+    coordinateOperator.HasCore logSchwartzSubmodule := by
+  refine ⟨logSchwartzSubmodule_le_coordinateOperatorDomain, ?_⟩
+  have hEq : coordinateOperatorSchwartzRestriction.closure = coordinateOperator :=
+    le_antisymm coordinateOperatorSchwartzClosure_le_coordinateOperator
+      coordinateOperator_le_coordinateOperatorSchwartzClosure
+  simpa [coordinateOperatorSchwartzRestriction] using hEq
+
 /-- Restriction of the maximal self-adjoint generator to Schwartz `L²` vectors. -/
 def logGeneratorSchwartzRestriction : LogHilbert →ₗ.[ℂ] LogHilbert :=
   logGenerator.domRestrict logSchwartzSubmodule
