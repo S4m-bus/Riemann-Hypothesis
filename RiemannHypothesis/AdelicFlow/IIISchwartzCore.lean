@@ -1,6 +1,7 @@
 import RiemannHypothesis.AdelicFlow.IIILogGeneratorCore
 import Mathlib.Topology.Algebra.Module.LinearPMap
 import Mathlib.MeasureTheory.Function.Holder
+import Mathlib.Analysis.Distribution.TemperateGrowth
 
 noncomputable section
 
@@ -93,6 +94,53 @@ theorem plusResolventCLM_eq_plusResolventVector (g : LogHilbert) :
     plusResolventCLM g = plusResolventVector g := by
   rw [Lp.ext_iff]
   exact (plusResolventCLM_ae g).trans (plusResolventVector_ae g).symm
+
+/-- The rational resolvent multiplier has temperate growth.  We use the identity
+`(x+i)⁻¹ = (1+x²)⁻¹ (x-i)`: mathlib already knows temperate growth of the
+Bessel weight `(1+‖x‖²)^r`, so no all-orders rational-derivative estimate is
+left implicit here. -/
+theorem plusResolventMultiplier_hasTemperateGrowth :
+    Function.HasTemperateGrowth plusResolventMultiplier := by
+  have hweight :
+      Function.HasTemperateGrowth
+        (fun x : ℝ => (1 + ‖x‖ ^ 2) ^ (-1 : ℝ)) :=
+    Function.hasTemperateGrowth_one_add_norm_sq_rpow ℝ (-1)
+  have haff :
+      Function.HasTemperateGrowth (fun x : ℝ => (x : ℂ) - Complex.I) := by
+    fun_prop
+  have hprod :
+      Function.HasTemperateGrowth
+        (fun x : ℝ =>
+          ((1 + ‖x‖ ^ 2) ^ (-1 : ℝ)) • ((x : ℂ) - Complex.I)) := by
+    exact (ContinuousLinearMap.lsmul ℝ ℂ).bilinear_hasTemperateGrowth hweight haff
+  convert hprod using 1
+  funext x
+  rw [plusResolventMultiplier, Complex.inv_def, normSq_plusDenom]
+  simp [plusDenom, Real.rpow_neg_one, Real.norm_eq_abs, sq_abs, Complex.real_smul]
+  ring
+
+/-- Resolvent multiplication preserves Schwartz space. -/
+def plusResolventSchwartz (f : SchwartzMap ℝ ℂ) : SchwartzMap ℝ ℂ :=
+  SchwartzMap.smulLeftCLM ℂ plusResolventMultiplier f
+
+@[simp]
+theorem plusResolventSchwartz_apply (f : SchwartzMap ℝ ℂ) (x : ℝ) :
+    plusResolventSchwartz f x = plusResolventMultiplier x * f x := by
+  rw [plusResolventSchwartz]
+  rw [SchwartzMap.smulLeftCLM_apply_apply plusResolventMultiplier_hasTemperateGrowth]
+  simp [smul_eq_mul]
+
+/-- On Schwartz input, the bounded `L²` resolvent is represented by the
+Schwartz resolvent multiplier above. -/
+theorem plusResolventCLM_schwartz_toLp (f : SchwartzMap ℝ ℂ) :
+    plusResolventCLM (f.toLp 2 volume) =
+      (plusResolventSchwartz f).toLp 2 volume := by
+  rw [Lp.ext_iff]
+  filter_upwards [plusResolventCLM_ae (f.toLp 2 volume),
+    f.coeFn_toLp 2 volume,
+    (plusResolventSchwartz f).coeFn_toLp 2 volume] with x hR hf hS
+  rw [hR, hS]
+  simp [plusResolventWeighted, plusResolventSchwartz_apply, hf]
 
 /-- Restriction of the maximal self-adjoint generator to Schwartz `L²` vectors. -/
 def logGeneratorSchwartzRestriction : LogHilbert →ₗ.[ℂ] LogHilbert :=
