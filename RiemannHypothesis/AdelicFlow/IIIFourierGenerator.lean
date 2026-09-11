@@ -21,10 +21,8 @@ Hence the self-adjoint momentum operator `-i ∂q` is the unitary conjugate of
 
 /-- Plancherel Fourier transform on the logarithmic Hilbert space.
 
-This is deliberately an opaque `def` rather than an `abbrev`: all transport
-proofs use only the unitary-equivalence interface, so the kernel should not
-re-expand the implementation of the `L²` Fourier transform while checking
-unbounded-domain witnesses. -/
+This remains the exact unitary Fourier transform.  The later domain equivalence
+is only its restriction to the maximal unbounded-operator domains. -/
 def logFourierUnitary : LogHilbert ≃ₗᵢ[ℂ] LogHilbert :=
   MeasureTheory.Lp.fourierTransformₗᵢ ℝ ℂ
 
@@ -32,22 +30,28 @@ def logFourierUnitary : LogHilbert ≃ₗᵢ[ℂ] LogHilbert :=
 def logGeneratorDomain : Submodule ℂ LogHilbert :=
   scaledCoordinateOperator.domain.comap logFourierUnitary.toLinearMap
 
-/-- Fourier transform, restricted to the transported domain. -/
+/-- The exact Fourier transform restricted to the two maximal domains.
+
+This is not a replacement of Fourier by an arbitrary linear map: it is the
+restriction of `logFourierUnitary.toLinearEquiv` supplied by mathlib's native
+`LinearEquiv.ofSubmodule'` construction. -/
+def logGeneratorFourierDomainEquiv :
+    logGeneratorDomain ≃ₗ[ℂ] scaledCoordinateOperator.domain := by
+  change (scaledCoordinateOperator.domain.comap logFourierUnitary.toLinearMap) ≃ₗ[ℂ]
+    scaledCoordinateOperator.domain
+  exact logFourierUnitary.toLinearEquiv.ofSubmodule' scaledCoordinateOperator.domain
+
+/-- Linear-map view of the restricted Fourier domain equivalence. -/
 def logGeneratorFourierDomainMap :
-    logGeneratorDomain →ₗ[ℂ] scaledCoordinateOperator.domain where
-  toFun f := ⟨logFourierUnitary (f : LogHilbert), f.property⟩
-  map_add' f g := by
-    apply Subtype.ext
-    simp
-  map_smul' c f := by
-    apply Subtype.ext
-    simp
+    logGeneratorDomain →ₗ[ℂ] scaledCoordinateOperator.domain :=
+  logGeneratorFourierDomainEquiv.toLinearMap
 
 @[simp]
 theorem logGeneratorFourierDomainMap_coe (f : logGeneratorDomain) :
     (logGeneratorFourierDomainMap f : LogHilbert) =
       logFourierUnitary (f : LogHilbert) := by
-  rfl
+  simp only [logGeneratorFourierDomainMap, logGeneratorFourierDomainEquiv,
+    LinearEquiv.ofSubmodule'_apply]
 
 /-- The maximal logarithmic generator, defined by exact unitary conjugation
 `F⁻¹ (2π Q) F`. -/
@@ -108,38 +112,6 @@ theorem logGenerator_isFormalAdjoint :
     _ = inner ℂ (f : LogHilbert) (logGenerator g) := by
           exact logFourierUnitary.inner_map_map _ _
 
-/-- Inverse domain transport: every Fourier-side domain vector pulls back to
-the maximal logarithmic-generator domain. -/
-def logGeneratorInverseDomainMap
-    (x : scaledCoordinateOperator.domain) : logGenerator.domain :=
-  ⟨logFourierUnitary.symm (x : LogHilbert), by
-    change logFourierUnitary (logFourierUnitary.symm (x : LogHilbert)) ∈
-      scaledCoordinateOperator.domain
-    rw [logFourierUnitary.apply_symm_apply]
-    exact x.property⟩
-
-@[simp]
-theorem logGeneratorInverseDomainMap_coe
-    (x : scaledCoordinateOperator.domain) :
-    (logGeneratorInverseDomainMap x : LogHilbert) =
-      logFourierUnitary.symm (x : LogHilbert) := by
-  rfl
-
-@[simp]
-theorem fourier_logGeneratorInverseDomainMap
-    (x : scaledCoordinateOperator.domain) :
-    logFourierUnitary (logGeneratorInverseDomainMap x : LogHilbert) =
-      (x : LogHilbert) := by
-  rw [logGeneratorInverseDomainMap_coe]
-  exact logFourierUnitary.apply_symm_apply (x : LogHilbert)
-
-@[simp]
-theorem logGeneratorFourierDomainMap_inverse
-    (x : scaledCoordinateOperator.domain) :
-    logGeneratorFourierDomainMap (logGeneratorInverseDomainMap x) = x := by
-  apply Subtype.ext
-  exact fourier_logGeneratorInverseDomainMap x
-
 /-- If `y` belongs to the adjoint domain of the transported operator, then its
 Fourier transform belongs to the adjoint domain of `2π Q`. -/
 theorem fourier_mem_scaledAdjoint_of_mem_logAdjoint {y : LogHilbert}
@@ -149,12 +121,18 @@ theorem fourier_mem_scaledAdjoint_of_mem_logAdjoint {y : LogHilbert}
   apply LinearPMap.mem_adjoint_domain_of_exists
   refine ⟨logFourierUnitary (logGenerator† yAdj), ?_⟩
   intro x
-  let xLog : logGenerator.domain := logGeneratorInverseDomainMap x
+  let xLog : logGeneratorDomain := logGeneratorFourierDomainEquiv.symm x
+  have hxMap : logGeneratorFourierDomainMap xLog = x := by
+    simpa [logGeneratorFourierDomainMap, xLog] using
+      logGeneratorFourierDomainEquiv.apply_symm_apply x
+  have hxFourier : logFourierUnitary (xLog : LogHilbert) = (x : LogHilbert) := by
+    rw [← logGeneratorFourierDomainMap_coe xLog, hxMap]
   have hAdj := LinearPMap.adjoint_isFormalAdjoint logGeneratorDomain_dense yAdj xLog
   calc
     inner ℂ (logFourierUnitary (logGenerator† yAdj)) (x : LogHilbert) =
-        inner ℂ (logGenerator† yAdj) (xLog : LogHilbert) := by
-          rw [← fourier_logGeneratorInverseDomainMap x]
+        inner ℂ (logFourierUnitary (logGenerator† yAdj))
+          (logFourierUnitary (xLog : LogHilbert)) := by rw [hxFourier]
+    _ = inner ℂ (logGenerator† yAdj) (xLog : LogHilbert) := by
           exact logFourierUnitary.inner_map_map _ _
     _ = inner ℂ y (logGenerator xLog) := hAdj
     _ = inner ℂ (logFourierUnitary y)
@@ -163,11 +141,7 @@ theorem fourier_mem_scaledAdjoint_of_mem_logAdjoint {y : LogHilbert}
           exact logFourierUnitary.inner_map_map _ _
     _ = inner ℂ (logFourierUnitary y)
         (scaledCoordinateOperator x) := by
-          rw [fourier_logGenerator]
-          change inner ℂ (logFourierUnitary y)
-            (scaledCoordinateOperator (logGeneratorFourierDomainMap xLog)) = _
-          rw [show logGeneratorFourierDomainMap xLog = x by
-            exact logGeneratorFourierDomainMap_inverse x]
+          rw [fourier_logGenerator, hxMap]
 
 /-- The adjoint of the transported generator has no larger domain. -/
 theorem logGeneratorAdjoint_domain_le :
