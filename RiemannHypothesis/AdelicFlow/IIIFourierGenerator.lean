@@ -50,8 +50,7 @@ def logGeneratorFourierDomainMap :
 theorem logGeneratorFourierDomainMap_coe (f : logGeneratorDomain) :
     (logGeneratorFourierDomainMap f : LogHilbert) =
       logFourierUnitary (f : LogHilbert) := by
-  simp only [logGeneratorFourierDomainMap, logGeneratorFourierDomainEquiv,
-    LinearEquiv.ofSubmodule'_apply]
+  rfl
 
 /-- The maximal logarithmic generator, defined by exact unitary conjugation
 `F⁻¹ (2π Q) F`. -/
@@ -121,13 +120,20 @@ theorem fourier_mem_scaledAdjoint_of_mem_logAdjoint {y : LogHilbert}
   apply LinearPMap.mem_adjoint_domain_of_exists
   refine ⟨logFourierUnitary (logGenerator† yAdj), ?_⟩
   intro x
-  let xLog : logGeneratorDomain := logGeneratorFourierDomainEquiv.symm x
+  let xLog : logGenerator.domain := by
+    change logGeneratorDomain
+    exact logGeneratorFourierDomainEquiv.symm x
   have hxMap : logGeneratorFourierDomainMap xLog = x := by
-    simpa [logGeneratorFourierDomainMap, xLog] using
+    change logGeneratorFourierDomainMap (logGeneratorFourierDomainEquiv.symm x) = x
+    simpa [logGeneratorFourierDomainMap] using
       logGeneratorFourierDomainEquiv.apply_symm_apply x
   have hxFourier : logFourierUnitary (xLog : LogHilbert) = (x : LogHilbert) := by
     rw [← logGeneratorFourierDomainMap_coe xLog, hxMap]
   have hAdj := LinearPMap.adjoint_isFormalAdjoint logGeneratorDomain_dense yAdj xLog
+  have hGenFourier :
+      logFourierUnitary (logGenerator xLog) = scaledCoordinateOperator x := by
+    rw [fourier_logGenerator xLog]
+    rw [hxMap]
   calc
     inner ℂ (logFourierUnitary (logGenerator† yAdj)) (x : LogHilbert) =
         inner ℂ (logFourierUnitary (logGenerator† yAdj))
@@ -140,8 +146,7 @@ theorem fourier_mem_scaledAdjoint_of_mem_logAdjoint {y : LogHilbert}
           symm
           exact logFourierUnitary.inner_map_map _ _
     _ = inner ℂ (logFourierUnitary y)
-        (scaledCoordinateOperator x) := by
-          rw [fourier_logGenerator, hxMap]
+        (scaledCoordinateOperator x) := by rw [hGenFourier]
 
 /-- The adjoint of the transported generator has no larger domain. -/
 theorem logGeneratorAdjoint_domain_le :
