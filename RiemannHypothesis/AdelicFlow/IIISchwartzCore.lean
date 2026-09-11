@@ -113,7 +113,7 @@ theorem plusResolventMultiplier_hasTemperateGrowth :
       Function.HasTemperateGrowth
         (fun x : ℝ =>
           ((1 + ‖x‖ ^ 2) ^ (-1 : ℝ)) • ((x : ℂ) - Complex.I)) := by
-    exact (ContinuousLinearMap.lsmul ℝ ℂ).bilinear_hasTemperateGrowth hweight haff
+    exact hweight.smul haff
   convert hprod using 1
   funext x
   rw [plusResolventMultiplier, Complex.inv_def, normSq_plusDenom]
