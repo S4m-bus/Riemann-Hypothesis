@@ -264,8 +264,20 @@ theorem coordinateGraphResolventCLM_mem_coordinateSchwartzGraph
   · change coordinateOperator
         ⟨plusResolventCLM (f.toLp 2 volume), hD⟩ =
       f.toLp 2 volume - Complex.I • plusResolventCLM (f.toLp 2 volume)
-    rw [plusResolventCLM_eq_plusResolventVector]
-    exact eq_sub_of_add_eq (plusResolvent_equation (f.toLp 2 volume))
+    let q : coordinateOperator.domain :=
+      ⟨plusResolventCLM (f.toLp 2 volume), hD⟩
+    change coordinateOperator q =
+      f.toLp 2 volume - Complex.I • plusResolventCLM (f.toLp 2 volume)
+    have hq : q = plusResolventDomain (f.toLp 2 volume) := by
+      apply Subtype.ext
+      exact plusResolventCLM_eq_plusResolventVector (f.toLp 2 volume)
+    calc
+      coordinateOperator q =
+          coordinateOperator (plusResolventDomain (f.toLp 2 volume)) := by rw [hq]
+      _ = f.toLp 2 volume - Complex.I • plusResolventVector (f.toLp 2 volume) :=
+        eq_sub_of_add_eq (plusResolvent_equation (f.toLp 2 volume))
+      _ = f.toLp 2 volume - Complex.I • plusResolventCLM (f.toLp 2 volume) := by
+        rw [plusResolventCLM_eq_plusResolventVector]
 
 /-- The maximal coordinate graph lies in the closure of its Schwartz-restricted graph. -/
 theorem coordinateOperator_graph_le_schwartzGraphClosure :
@@ -295,7 +307,11 @@ theorem coordinateOperator_graph_le_schwartzGraphClosure :
     closure_mono hsubset hT
   have hparam := coordinateGraphResolventCLM_on_coordinateDomain u
   rw [hparam] at hT'
-  simpa only [Submodule.topologicalClosure_coe] using hT'
+  change ((u : LogHilbert), coordinateOperator u) ∈
+    (coordinateOperatorSchwartzRestriction.graph.topologicalClosure :
+      Set (LogHilbert × LogHilbert))
+  rw [Submodule.topologicalClosure_coe]
+  exact hT'
 
 /-- The coordinate Schwartz restriction is closable, since maximal `Q` is closed. -/
 theorem coordinateOperatorSchwartzRestriction_isClosable :
