@@ -141,7 +141,9 @@ theorem plusResolvent_equation (g : LogHilbert) :
   simp only [Pi.add_apply]
   rw [hSmul]
   simp only [Pi.smul_apply, smul_eq_mul]
-  rw [coordinateOperator_apply, hQ, hR]
+  rw [coordinateOperator_apply, hQ]
+  simp only [coordinateWeighted, plusResolventDomain, plusResolventWeighted]
+  rw [hR]
   change (x : ℂ) * (plusResolventMultiplier x * g x) +
       Complex.I * (plusResolventMultiplier x * g x) = g x
   have h := plusDenom_mul_resolvent x
@@ -165,7 +167,9 @@ theorem minusResolvent_equation (g : LogHilbert) :
   simp only [Pi.sub_apply]
   rw [hSmul]
   simp only [Pi.smul_apply, smul_eq_mul]
-  rw [coordinateOperator_apply, hQ, hR]
+  rw [coordinateOperator_apply, hQ]
+  simp only [coordinateWeighted, minusResolventDomain, minusResolventWeighted]
+  rw [hR]
   change (x : ℂ) * (minusResolventMultiplier x * g x) -
       Complex.I * (minusResolventMultiplier x * g x) = g x
   have h := minusDenom_mul_resolvent x
