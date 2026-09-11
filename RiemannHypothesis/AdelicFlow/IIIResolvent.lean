@@ -1,0 +1,184 @@
+import RiemannHypothesis.AdelicFlow.IIISelfAdjoint
+import Mathlib.MeasureTheory.Function.LpSeminorm.CompareExp
+
+noncomputable section
+
+open MeasureTheory
+open scoped LinearPMap
+
+namespace RiemannHypothesis.AdelicFlow
+
+/-!
+# Number III: non-real resolvents of the coordinate operator
+
+We construct the two vectors obtained by multiplying an arbitrary `L²` vector by
+`(x+i)⁻¹` and `(x-i)⁻¹`, prove that they lie in the maximal coordinate domain,
+and prove the exact resolvent equations.
+-/
+
+/-- The positive resolvent multiplier is continuous. -/
+theorem continuous_plusResolventMultiplier : Continuous plusResolventMultiplier := by
+  unfold plusResolventMultiplier
+  exact (show Continuous plusDenom by fun_prop).inv₀ plusDenom_ne_zero
+
+/-- The negative resolvent multiplier is continuous. -/
+theorem continuous_minusResolventMultiplier : Continuous minusResolventMultiplier := by
+  unfold minusResolventMultiplier
+  exact (show Continuous minusDenom by fun_prop).inv₀ minusDenom_ne_zero
+
+/-- The positive resolvent multiplier belongs to `L∞`. -/
+theorem plusResolventMultiplier_memLp_top :
+    MemLp plusResolventMultiplier ⊤ volume := by
+  refine memLp_top_of_bound continuous_plusResolventMultiplier.aestronglyMeasurable 1 ?_
+  exact Filter.Eventually.of_forall norm_plusResolventMultiplier_le_one
+
+/-- The negative resolvent multiplier belongs to `L∞`. -/
+theorem minusResolventMultiplier_memLp_top :
+    MemLp minusResolventMultiplier ⊤ volume := by
+  refine memLp_top_of_bound continuous_minusResolventMultiplier.aestronglyMeasurable 1 ?_
+  exact Filter.Eventually.of_forall norm_minusResolventMultiplier_le_one
+
+/-- Raw representative of `(Q+i)⁻¹ g`. -/
+def plusResolventWeighted (g : LogHilbert) : ℝ → ℂ :=
+  fun x => plusResolventMultiplier x * g x
+
+/-- Raw representative of `(Q-i)⁻¹ g`. -/
+def minusResolventWeighted (g : LogHilbert) : ℝ → ℂ :=
+  fun x => minusResolventMultiplier x * g x
+
+/-- The positive resolvent representative is in `L²`. -/
+theorem plusResolventWeighted_memLp (g : LogHilbert) :
+    MemLp (plusResolventWeighted g) 2 volume := by
+  simpa [plusResolventWeighted] using
+    (Lp.memLp g).mul plusResolventMultiplier_memLp_top
+
+/-- The negative resolvent representative is in `L²`. -/
+theorem minusResolventWeighted_memLp (g : LogHilbert) :
+    MemLp (minusResolventWeighted g) 2 volume := by
+  simpa [minusResolventWeighted] using
+    (Lp.memLp g).mul minusResolventMultiplier_memLp_top
+
+/-- The `L²` vector `(Q+i)⁻¹ g`. -/
+def plusResolventVector (g : LogHilbert) : LogHilbert :=
+  (plusResolventWeighted_memLp g).toLp (plusResolventWeighted g)
+
+/-- The `L²` vector `(Q-i)⁻¹ g`. -/
+def minusResolventVector (g : LogHilbert) : LogHilbert :=
+  (minusResolventWeighted_memLp g).toLp (minusResolventWeighted g)
+
+/-- Almost-everywhere representative of the positive resolvent vector. -/
+theorem plusResolventVector_ae (g : LogHilbert) :
+    (plusResolventVector g : ℝ → ℂ) =ᵐ[volume] plusResolventWeighted g := by
+  exact MemLp.coeFn_toLp (plusResolventWeighted_memLp g)
+
+/-- Almost-everywhere representative of the negative resolvent vector. -/
+theorem minusResolventVector_ae (g : LogHilbert) :
+    (minusResolventVector g : ℝ → ℂ) =ᵐ[volume] minusResolventWeighted g := by
+  exact MemLp.coeFn_toLp (minusResolventWeighted_memLp g)
+
+/-- `(Q+i)⁻¹ g` belongs to the maximal coordinate domain. -/
+theorem plusResolventVector_mem_coordinateDomain (g : LogHilbert) :
+    plusResolventVector g ∈ coordinateDomain := by
+  change MemLp (coordinateWeighted (plusResolventVector g)) 2 volume
+  have hsub : MemLp
+      (fun x => g x - Complex.I * (plusResolventVector g) x) 2 volume := by
+    simpa [Pi.sub_apply, Pi.smul_apply, smul_eq_mul] using
+      (Lp.memLp g).sub ((Lp.memLp (plusResolventVector g)).const_smul Complex.I)
+  apply MemLp.ae_eq ?_ hsub
+  filter_upwards [plusResolventVector_ae g] with x hx
+  change g x - Complex.I * (plusResolventVector g) x =
+    (x : ℂ) * (plusResolventVector g) x
+  rw [hx]
+  change g x - Complex.I * (plusResolventMultiplier x * g x) =
+    (x : ℂ) * (plusResolventMultiplier x * g x)
+  rw [← mul_assoc, coord_mul_plusResolventMultiplier]
+  ring
+
+/-- `(Q-i)⁻¹ g` belongs to the maximal coordinate domain. -/
+theorem minusResolventVector_mem_coordinateDomain (g : LogHilbert) :
+    minusResolventVector g ∈ coordinateDomain := by
+  change MemLp (coordinateWeighted (minusResolventVector g)) 2 volume
+  have hadd : MemLp
+      (fun x => g x + Complex.I * (minusResolventVector g) x) 2 volume := by
+    simpa [Pi.add_apply, Pi.smul_apply, smul_eq_mul] using
+      (Lp.memLp g).add ((Lp.memLp (minusResolventVector g)).const_smul Complex.I)
+  apply MemLp.ae_eq ?_ hadd
+  filter_upwards [minusResolventVector_ae g] with x hx
+  change g x + Complex.I * (minusResolventVector g) x =
+    (x : ℂ) * (minusResolventVector g) x
+  rw [hx]
+  change g x + Complex.I * (minusResolventMultiplier x * g x) =
+    (x : ℂ) * (minusResolventMultiplier x * g x)
+  rw [← mul_assoc, coord_mul_minusResolventMultiplier]
+  ring
+
+/-- Positive resolvent vector packaged in the operator domain. -/
+def plusResolventDomain (g : LogHilbert) : coordinateDomain :=
+  ⟨plusResolventVector g, plusResolventVector_mem_coordinateDomain g⟩
+
+/-- Negative resolvent vector packaged in the operator domain. -/
+def minusResolventDomain (g : LogHilbert) : coordinateDomain :=
+  ⟨minusResolventVector g, minusResolventVector_mem_coordinateDomain g⟩
+
+/-- Exact positive resolvent equation `(Q+i)R₊g=g`. -/
+theorem plusResolvent_equation (g : LogHilbert) :
+    coordinateOperator (plusResolventDomain g) +
+      Complex.I • plusResolventVector g = g := by
+  simp only [coordinateOperator_apply]
+  rw [Lp.ext_iff]
+  filter_upwards [coordinateApply_ae (plusResolventDomain g), plusResolventVector_ae g,
+    Lp.coeFn_add (coordinateApply (plusResolventDomain g))
+      (Complex.I • plusResolventVector g),
+    Lp.coeFn_smul Complex.I (plusResolventVector g)] with x hQ hR hAdd hSmul
+  rw [hAdd, hQ, hSmul]
+  simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul]
+  rw [hR]
+  change (x : ℂ) * (plusResolventMultiplier x * g x) +
+      Complex.I * (plusResolventMultiplier x * g x) = g x
+  have h := plusDenom_mul_resolvent x
+  dsimp [plusDenom] at h
+  calc
+    (x : ℂ) * (plusResolventMultiplier x * g x) +
+        Complex.I * (plusResolventMultiplier x * g x) =
+        (((x : ℂ) + Complex.I) * plusResolventMultiplier x) * g x := by ring
+    _ = g x := by rw [h, one_mul]
+
+/-- Exact negative resolvent equation `(Q-i)R₋g=g`. -/
+theorem minusResolvent_equation (g : LogHilbert) :
+    coordinateOperator (minusResolventDomain g) -
+      Complex.I • minusResolventVector g = g := by
+  simp only [coordinateOperator_apply]
+  rw [Lp.ext_iff]
+  filter_upwards [coordinateApply_ae (minusResolventDomain g), minusResolventVector_ae g,
+    Lp.coeFn_sub (coordinateApply (minusResolventDomain g))
+      (Complex.I • minusResolventVector g),
+    Lp.coeFn_smul Complex.I (minusResolventVector g)] with x hQ hR hSub hSmul
+  rw [hSub, hQ, hSmul]
+  simp only [Pi.sub_apply, Pi.smul_apply, smul_eq_mul]
+  rw [hR]
+  change (x : ℂ) * (minusResolventMultiplier x * g x) -
+      Complex.I * (minusResolventMultiplier x * g x) = g x
+  have h := minusDenom_mul_resolvent x
+  dsimp [minusDenom] at h
+  calc
+    (x : ℂ) * (minusResolventMultiplier x * g x) -
+        Complex.I * (minusResolventMultiplier x * g x) =
+        (((x : ℂ) - Complex.I) * minusResolventMultiplier x) * g x := by ring
+    _ = g x := by rw [h, one_mul]
+
+/-- Surjectivity of `Q+iI`, expressed without replacing the unbounded operator by
+a bounded surrogate. -/
+theorem coordinateOperator_plus_I_surjective (g : LogHilbert) :
+    ∃ f : coordinateOperator.domain,
+      coordinateOperator f + Complex.I • (f : LogHilbert) = g := by
+  refine ⟨plusResolventDomain g, ?_⟩
+  simpa [plusResolventDomain] using plusResolvent_equation g
+
+/-- Surjectivity of `Q-iI`. -/
+theorem coordinateOperator_minus_I_surjective (g : LogHilbert) :
+    ∃ f : coordinateOperator.domain,
+      coordinateOperator f - Complex.I • (f : LogHilbert) = g := by
+  refine ⟨minusResolventDomain g, ?_⟩
+  simpa [minusResolventDomain] using minusResolvent_equation g
+
+end RiemannHypothesis.AdelicFlow
