@@ -75,11 +75,12 @@ theorem schwartz_toLp_mem_logGeneratorDomain (f : SchwartzMap ℝ ℂ) :
   change f.toLp 2 volume ∈ logGeneratorDomain
   exact schwartz_toLp_mem_logGeneratorSubmodule f
 
-/-- A packaged Schwartz vector in the maximal generator domain.  Keeping this
-subtype witness opaque prevents later theorem statements from repeatedly reducing
-the full transported-domain proof. -/
-def schwartzLogGeneratorVector (f : SchwartzMap ℝ ℂ) : logGenerator.domain :=
-  ⟨f.toLp 2 volume, schwartz_toLp_mem_logGeneratorDomain f⟩
+/-- A packaged Schwartz vector in the explicit maximal transported domain.
+Since `logGenerator.domain` is definitionally `logGeneratorDomain`, this same
+vector is accepted by the unbounded operator while retaining the native domain
+type expected by the restricted Fourier equivalence. -/
+def schwartzLogGeneratorVector (f : SchwartzMap ℝ ℂ) : logGeneratorDomain :=
+  ⟨f.toLp 2 volume, schwartz_toLp_mem_logGeneratorSubmodule f⟩
 
 @[simp]
 theorem schwartzLogGeneratorVector_coe (f : SchwartzMap ℝ ℂ) :
