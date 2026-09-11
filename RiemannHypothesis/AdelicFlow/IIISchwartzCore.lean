@@ -1,5 +1,6 @@
 import RiemannHypothesis.AdelicFlow.IIILogGeneratorCore
 import Mathlib.Topology.Algebra.Module.LinearPMap
+import Mathlib.Topology.Algebra.Module.ContinuousLinearMap.PiProd
 import Mathlib.MeasureTheory.Function.Holder
 import Mathlib.Analysis.Distribution.TemperateGrowth
 
@@ -141,6 +142,87 @@ theorem plusResolventCLM_schwartz_toLp (f : SchwartzMap ℝ ℂ) :
     (plusResolventSchwartz f).coeFn_toLp 2 volume] with x hR hf hS
   rw [hR, hS]
   simp [plusResolventWeighted, plusResolventSchwartz_apply, hf]
+
+/-! ## Coordinate graph parametrization
+
+The bounded resolvent gives a continuous parametrization of the graph of `Q`:
+`g ↦ (R₊ g, g - i R₊ g)`.  The next lemmas make both directions explicit.
+-/
+
+/-- Schwartz `L²` vectors also lie in the maximal coordinate domain. -/
+theorem logSchwartzSubmodule_le_coordinateOperatorDomain :
+    logSchwartzSubmodule ≤ coordinateOperator.domain := by
+  intro u hu
+  change u ∈ LinearMap.range
+    (SchwartzMap.toLpCLM ℂ (E := ℝ) ℂ 2 volume).toLinearMap at hu
+  rcases hu with ⟨f, rfl⟩
+  exact schwartz_toLp_mem_coordinateOperatorDomain f
+
+/-- Restriction of the coordinate operator to Schwartz `L²` vectors. -/
+def coordinateOperatorSchwartzRestriction : LogHilbert →ₗ.[ℂ] LogHilbert :=
+  coordinateOperator.domRestrict logSchwartzSubmodule
+
+/-- The coordinate Schwartz restriction is an operator restriction of `Q`. -/
+theorem coordinateOperatorSchwartzRestriction_le_coordinateOperator :
+    coordinateOperatorSchwartzRestriction ≤ coordinateOperator := by
+  exact LinearPMap.domRestrict_le
+
+/-- Continuous graph parametrization associated with the positive resolvent. -/
+def coordinateGraphResolventCLM :
+    LogHilbert →L[ℂ] (LogHilbert × LogHilbert) :=
+  plusResolventCLM.prod
+    ((ContinuousLinearMap.id ℂ LogHilbert) - Complex.I • plusResolventCLM)
+
+@[simp]
+theorem coordinateGraphResolventCLM_apply (g : LogHilbert) :
+    coordinateGraphResolventCLM g =
+      (plusResolventCLM g, g - Complex.I • plusResolventCLM g) := by
+  simp [coordinateGraphResolventCLM]
+
+/-- Applying the explicit bounded resolvent to `(Q+i)u` returns `u`.  This is
+proved directly on `L²` representatives, so no hidden injectivity argument for
+an unbounded shift is used. -/
+theorem plusResolventCLM_coordinate_plus_I (u : coordinateOperator.domain) :
+    plusResolventCLM
+        (coordinateOperator u + Complex.I • (u : LogHilbert)) =
+      (u : LogHilbert) := by
+  rw [Lp.ext_iff]
+  filter_upwards [
+      plusResolventCLM_ae
+        (coordinateOperator u + Complex.I • (u : LogHilbert)),
+      coordinateApply_ae u,
+      Lp.coeFn_add (coordinateOperator u) (Complex.I • (u : LogHilbert)),
+      Lp.coeFn_smul Complex.I (u : LogHilbert)] with x hR hQ hAdd hSmul
+  rw [hR]
+  simp only [plusResolventWeighted]
+  rw [hAdd]
+  simp only [Pi.add_apply]
+  rw [hSmul]
+  simp only [Pi.smul_apply, smul_eq_mul]
+  rw [coordinateOperator_apply, hQ]
+  simp only [coordinateWeighted]
+  change plusResolventMultiplier x *
+      ((x : ℂ) * (u : LogHilbert) x + Complex.I * (u : LogHilbert) x) =
+    (u : LogHilbert) x
+  calc
+    plusResolventMultiplier x *
+        ((x : ℂ) * (u : LogHilbert) x + Complex.I * (u : LogHilbert) x) =
+        (plusResolventMultiplier x * plusDenom x) * (u : LogHilbert) x := by
+          simp [plusDenom]
+          ring
+    _ = (u : LogHilbert) x := by
+      rw [mul_comm (plusResolventMultiplier x) (plusDenom x),
+        plusDenom_mul_resolvent]
+      simp
+
+/-- The graph parametrization is onto the maximal coordinate graph. -/
+theorem coordinateGraphResolventCLM_on_coordinateDomain
+    (u : coordinateOperator.domain) :
+    coordinateGraphResolventCLM
+        (coordinateOperator u + Complex.I • (u : LogHilbert)) =
+      ((u : LogHilbert), coordinateOperator u) := by
+  rw [coordinateGraphResolventCLM_apply, plusResolventCLM_coordinate_plus_I]
+  simp
 
 /-- Restriction of the maximal self-adjoint generator to Schwartz `L²` vectors. -/
 def logGeneratorSchwartzRestriction : LogHilbert →ₗ.[ℂ] LogHilbert :=
