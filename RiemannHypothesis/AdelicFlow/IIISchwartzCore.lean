@@ -1,5 +1,6 @@
 import RiemannHypothesis.AdelicFlow.IIILogGeneratorCore
 import Mathlib.Topology.Algebra.Module.LinearPMap
+import Mathlib.MeasureTheory.Function.Holder
 
 noncomputable section
 
@@ -49,6 +50,49 @@ theorem logSchwartzSubmodule_dense :
   change f.toLp 2 volume ∈ LinearMap.range
     (SchwartzMap.toLpCLM ℂ (E := ℝ) ℂ 2 volume).toLinearMap
   exact ⟨f, rfl⟩
+
+/-! ## Bounded resolvent package for graph-density
+
+The coordinate resolvent `(Q+i)⁻¹` has already been constructed pointwise in
+`IIIResolvent`.  For the graph-core proof we also need its bounded-operator
+realization on `L²`, so that ordinary density can be transported continuously
+into the graph of the unbounded operator.
+-/
+
+/-- The multiplier `(x+i)⁻¹`, bundled as an `L∞` vector. -/
+def plusResolventLpInf : MeasureTheory.Lp ℂ ⊤ (volume : Measure ℝ) :=
+  plusResolventMultiplier_memLp_top.toLp plusResolventMultiplier
+
+/-- Almost-everywhere representative of the bundled `L∞` resolvent multiplier. -/
+theorem plusResolventLpInf_ae :
+    (plusResolventLpInf : ℝ → ℂ) =ᵐ[volume] plusResolventMultiplier := by
+  exact MemLp.coeFn_toLp plusResolventMultiplier_memLp_top
+
+/-- Multiplication by `(x+i)⁻¹` as a bounded operator `L² → L²`. -/
+def plusResolventCLM : LogHilbert →L[ℂ] LogHilbert :=
+  ((ContinuousLinearMap.lsmul ℂ ℂ).holderL (volume : Measure ℝ) ⊤ 2 2)
+    plusResolventLpInf
+
+/-- The bounded resolvent package has the expected pointwise representative. -/
+theorem plusResolventCLM_ae (g : LogHilbert) :
+    (plusResolventCLM g : ℝ → ℂ) =ᵐ[volume] plusResolventWeighted g := by
+  have hmul :=
+    (ContinuousLinearMap.lsmul ℂ ℂ).coeFn_holder
+      (r := (2 : ℝ≥0∞)) plusResolventLpInf g
+  have h :
+      ((ContinuousLinearMap.lsmul ℂ ℂ).holder (2 : ℝ≥0∞)
+          plusResolventLpInf g : ℝ → ℂ) =ᵐ[volume]
+        plusResolventWeighted g := by
+    filter_upwards [hmul, plusResolventLpInf_ae] with x hx hres
+    rw [hx, hres]
+    simp [plusResolventWeighted, smul_eq_mul]
+  simpa [plusResolventCLM] using h
+
+/-- The new bounded resolvent is exactly the previously constructed resolvent vector. -/
+theorem plusResolventCLM_eq_plusResolventVector (g : LogHilbert) :
+    plusResolventCLM g = plusResolventVector g := by
+  rw [Lp.ext_iff]
+  exact (plusResolventCLM_ae g).trans (plusResolventVector_ae g).symm
 
 /-- Restriction of the maximal self-adjoint generator to Schwartz `L²` vectors. -/
 def logGeneratorSchwartzRestriction : LogHilbert →ₗ.[ℂ] LogHilbert :=
