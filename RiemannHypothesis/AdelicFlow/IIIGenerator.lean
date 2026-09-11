@@ -3,6 +3,8 @@ import Mathlib.Analysis.Complex.Norm
 
 noncomputable section
 
+open MeasureTheory
+
 namespace RiemannHypothesis.AdelicFlow
 
 /-!
