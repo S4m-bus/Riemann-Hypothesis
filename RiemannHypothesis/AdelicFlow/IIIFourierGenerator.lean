@@ -103,6 +103,38 @@ theorem logGenerator_isFormalAdjoint :
     _ = inner ℂ (f : LogHilbert) (logGenerator g) := by
           exact logFourierUnitary.inner_map_map _ _
 
+/-- Inverse domain transport: every Fourier-side domain vector pulls back to
+the maximal logarithmic-generator domain.  Keeping this witness separate makes
+the later adjoint-transport proof small enough for the kernel to check directly. -/
+def logGeneratorInverseDomainMap
+    (x : scaledCoordinateOperator.domain) : logGenerator.domain :=
+  ⟨logFourierUnitary.symm (x : LogHilbert), by
+    change logFourierUnitary (logFourierUnitary.symm (x : LogHilbert)) ∈
+      scaledCoordinateOperator.domain
+    rw [logFourierUnitary.apply_symm_apply]
+    exact x.property⟩
+
+@[simp]
+theorem logGeneratorInverseDomainMap_coe
+    (x : scaledCoordinateOperator.domain) :
+    (logGeneratorInverseDomainMap x : LogHilbert) =
+      logFourierUnitary.symm (x : LogHilbert) := by
+  rfl
+
+@[simp]
+theorem fourier_logGeneratorInverseDomainMap
+    (x : scaledCoordinateOperator.domain) :
+    logFourierUnitary (logGeneratorInverseDomainMap x : LogHilbert) =
+      (x : LogHilbert) := by
+  simp [logGeneratorInverseDomainMap]
+
+@[simp]
+theorem logGeneratorFourierDomainMap_inverse
+    (x : scaledCoordinateOperator.domain) :
+    logGeneratorFourierDomainMap (logGeneratorInverseDomainMap x) = x := by
+  apply Subtype.ext
+  exact fourier_logGeneratorInverseDomainMap x
+
 /-- If `y` belongs to the adjoint domain of the transported operator, then its
 Fourier transform belongs to the adjoint domain of `2π Q`. -/
 theorem fourier_mem_scaledAdjoint_of_mem_logAdjoint {y : LogHilbert}
@@ -112,27 +144,12 @@ theorem fourier_mem_scaledAdjoint_of_mem_logAdjoint {y : LogHilbert}
   apply LinearPMap.mem_adjoint_domain_of_exists
   refine ⟨logFourierUnitary (logGenerator† yAdj), ?_⟩
   intro x
-  let x0 : LogHilbert := logFourierUnitary.symm (x : LogHilbert)
-  have hFx0 : logFourierUnitary x0 = (x : LogHilbert) := by
-    dsimp [x0]
-    exact logFourierUnitary.apply_symm_apply (x : LogHilbert)
-  have hx0 : x0 ∈ logGenerator.domain := by
-    change logFourierUnitary x0 ∈ scaledCoordinateOperator.domain
-    rw [hFx0]
-    exact x.property
-  let xLog : logGenerator.domain := ⟨x0, hx0⟩
-  have hxMap : logGeneratorFourierDomainMap xLog = x := by
-    apply Subtype.ext
-    change logFourierUnitary x0 = (x : LogHilbert)
-    exact hFx0
+  let xLog : logGenerator.domain := logGeneratorInverseDomainMap x
   have hAdj := LinearPMap.adjoint_isFormalAdjoint logGeneratorDomain_dense yAdj xLog
   calc
     inner ℂ (logFourierUnitary (logGenerator† yAdj)) (x : LogHilbert) =
-        inner ℂ (logFourierUnitary (logGenerator† yAdj))
-          (logFourierUnitary (xLog : LogHilbert)) := by
-            rw [show logFourierUnitary (xLog : LogHilbert) = (x : LogHilbert) by
-              simpa [xLog] using hFx0]
-    _ = inner ℂ (logGenerator† yAdj) (xLog : LogHilbert) := by
+        inner ℂ (logGenerator† yAdj) (xLog : LogHilbert) := by
+          rw [← fourier_logGeneratorInverseDomainMap x]
           exact logFourierUnitary.inner_map_map _ _
     _ = inner ℂ y (logGenerator xLog) := hAdj
     _ = inner ℂ (logFourierUnitary y)
@@ -141,7 +158,11 @@ theorem fourier_mem_scaledAdjoint_of_mem_logAdjoint {y : LogHilbert}
           exact logFourierUnitary.inner_map_map _ _
     _ = inner ℂ (logFourierUnitary y)
         (scaledCoordinateOperator x) := by
-          rw [fourier_logGenerator, hxMap]
+          rw [fourier_logGenerator]
+          change inner ℂ (logFourierUnitary y)
+            (scaledCoordinateOperator (logGeneratorFourierDomainMap xLog)) = _
+          rw [show logGeneratorFourierDomainMap xLog = x by
+            exact logGeneratorFourierDomainMap_inverse x]
 
 /-- The adjoint of the transported generator has no larger domain. -/
 theorem logGeneratorAdjoint_domain_le :
