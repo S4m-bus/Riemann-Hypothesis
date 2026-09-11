@@ -49,7 +49,7 @@ def minusResolventWeighted (g : LogHilbert) : ℝ → ℂ :=
 /-- The positive resolvent representative is in `L²`. -/
 theorem plusResolventWeighted_memLp (g : LogHilbert) :
     MemLp (plusResolventWeighted g) 2 volume := by
-  have h := (Lp.memLp g).mul plusResolventMultiplier_memLp_top
+  have h := (Lp.memLp g).mul (r := 2) plusResolventMultiplier_memLp_top
   apply MemLp.ae_eq ?_ h
   filter_upwards with x
   rfl
@@ -57,7 +57,7 @@ theorem plusResolventWeighted_memLp (g : LogHilbert) :
 /-- The negative resolvent representative is in `L²`. -/
 theorem minusResolventWeighted_memLp (g : LogHilbert) :
     MemLp (minusResolventWeighted g) 2 volume := by
-  have h := (Lp.memLp g).mul minusResolventMultiplier_memLp_top
+  have h := (Lp.memLp g).mul (r := 2) minusResolventMultiplier_memLp_top
   apply MemLp.ae_eq ?_ h
   filter_upwards with x
   rfl
@@ -89,8 +89,6 @@ theorem plusResolventVector_mem_coordinateDomain (g : LogHilbert) :
     (Lp.memLp g).sub ((Lp.memLp (plusResolventVector g)).const_smul Complex.I)
   apply MemLp.ae_eq ?_ hsub
   filter_upwards [plusResolventVector_ae g] with x hx
-  change ((g : ℝ → ℂ) - Complex.I • (plusResolventVector g : ℝ → ℂ)) x =
-    coordinateWeighted (plusResolventVector g) x
   simp only [Pi.sub_apply, Pi.smul_apply, smul_eq_mul, coordinateWeighted]
   rw [hx]
   change g x - Complex.I * (plusResolventMultiplier x * g x) =
@@ -111,8 +109,6 @@ theorem minusResolventVector_mem_coordinateDomain (g : LogHilbert) :
     (Lp.memLp g).add ((Lp.memLp (minusResolventVector g)).const_smul Complex.I)
   apply MemLp.ae_eq ?_ hadd
   filter_upwards [minusResolventVector_ae g] with x hx
-  change ((g : ℝ → ℂ) + Complex.I • (minusResolventVector g : ℝ → ℂ)) x =
-    coordinateWeighted (minusResolventVector g) x
   simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul, coordinateWeighted]
   rw [hx]
   change g x + Complex.I * (minusResolventMultiplier x * g x) =
@@ -141,8 +137,10 @@ theorem plusResolvent_equation (g : LogHilbert) :
     Lp.coeFn_add (coordinateOperator (plusResolventDomain g))
       (Complex.I • plusResolventVector g),
     Lp.coeFn_smul Complex.I (plusResolventVector g)] with x hQ hR hAdd hSmul
-  rw [hAdd, hSmul]
-  simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul]
+  rw [hAdd]
+  simp only [Pi.add_apply]
+  rw [hSmul]
+  simp only [Pi.smul_apply, smul_eq_mul]
   rw [coordinateOperator_apply, hQ, hR]
   change (x : ℂ) * (plusResolventMultiplier x * g x) +
       Complex.I * (plusResolventMultiplier x * g x) = g x
@@ -163,8 +161,10 @@ theorem minusResolvent_equation (g : LogHilbert) :
     Lp.coeFn_sub (coordinateOperator (minusResolventDomain g))
       (Complex.I • minusResolventVector g),
     Lp.coeFn_smul Complex.I (minusResolventVector g)] with x hQ hR hSub hSmul
-  rw [hSub, hSmul]
-  simp only [Pi.sub_apply, Pi.smul_apply, smul_eq_mul]
+  rw [hSub]
+  simp only [Pi.sub_apply]
+  rw [hSmul]
+  simp only [Pi.smul_apply, smul_eq_mul]
   rw [coordinateOperator_apply, hQ, hR]
   change (x : ℂ) * (minusResolventMultiplier x * g x) -
       Complex.I * (minusResolventMultiplier x * g x) = g x
