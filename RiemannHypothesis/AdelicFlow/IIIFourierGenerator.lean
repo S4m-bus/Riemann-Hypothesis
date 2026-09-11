@@ -113,20 +113,25 @@ theorem fourier_mem_scaledAdjoint_of_mem_logAdjoint {y : LogHilbert}
   refine ⟨logFourierUnitary (logGenerator† yAdj), ?_⟩
   intro x
   let x0 : LogHilbert := logFourierUnitary.symm (x : LogHilbert)
+  have hFx0 : logFourierUnitary x0 = (x : LogHilbert) := by
+    dsimp [x0]
+    exact logFourierUnitary.apply_symm_apply (x : LogHilbert)
   have hx0 : x0 ∈ logGenerator.domain := by
     change logFourierUnitary x0 ∈ scaledCoordinateOperator.domain
-    simp [x0]
+    rw [hFx0]
+    exact x.property
   let xLog : logGenerator.domain := ⟨x0, hx0⟩
   have hxMap : logGeneratorFourierDomainMap xLog = x := by
     apply Subtype.ext
-    simp [xLog, x0]
+    change logFourierUnitary x0 = (x : LogHilbert)
+    exact hFx0
   have hAdj := LinearPMap.adjoint_isFormalAdjoint logGeneratorDomain_dense yAdj xLog
   calc
     inner ℂ (logFourierUnitary (logGenerator† yAdj)) (x : LogHilbert) =
         inner ℂ (logFourierUnitary (logGenerator† yAdj))
           (logFourierUnitary (xLog : LogHilbert)) := by
             rw [show logFourierUnitary (xLog : LogHilbert) = (x : LogHilbert) by
-              simpa [xLog, x0]]
+              simpa [xLog] using hFx0]
     _ = inner ℂ (logGenerator† yAdj) (xLog : LogHilbert) := by
           exact logFourierUnitary.inner_map_map _ _
     _ = inner ℂ y (logGenerator xLog) := hAdj
