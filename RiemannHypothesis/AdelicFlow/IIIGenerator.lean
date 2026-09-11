@@ -169,6 +169,7 @@ theorem coordinateApply_add (f g : coordinateDomain) :
   change (x : ℂ) * (f + g : coordinateDomain).1 x =
     (x : ℂ) * f.1 x + (x : ℂ) * g.1 x
   rw [Submodule.coe_add, hbase]
+  simp only [Pi.add_apply]
   ring
 
 @[simp]
