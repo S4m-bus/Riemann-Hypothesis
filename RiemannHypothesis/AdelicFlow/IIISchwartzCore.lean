@@ -78,12 +78,14 @@ def plusResolventCLM : LogHilbert →L[ℂ] LogHilbert :=
 /-- The bounded resolvent package has the expected pointwise representative. -/
 theorem plusResolventCLM_ae (g : LogHilbert) :
     (plusResolventCLM g : ℝ → ℂ) =ᵐ[volume] plusResolventWeighted g := by
-  have hmul :=
-    (ContinuousLinearMap.lsmul ℂ ℂ).coeFn_holder
-      (r := (2 : ENNReal)) plusResolventLpInf g
+  have hmul :
+      (((ContinuousLinearMap.lsmul ℂ ℂ).holder (2 : ENNReal)
+          plusResolventLpInf g : LogHilbert) : ℝ → ℂ) =ᵐ[volume]
+        fun x => plusResolventLpInf x • g x :=
+    (ContinuousLinearMap.lsmul ℂ ℂ).coeFn_holder plusResolventLpInf g
   have h :
-      ((ContinuousLinearMap.lsmul ℂ ℂ).holder (2 : ENNReal)
-          plusResolventLpInf g : ℝ → ℂ) =ᵐ[volume]
+      (((ContinuousLinearMap.lsmul ℂ ℂ).holder (2 : ENNReal)
+          plusResolventLpInf g : LogHilbert) : ℝ → ℂ) =ᵐ[volume]
         plusResolventWeighted g := by
     filter_upwards [hmul, plusResolventLpInf_ae] with x hx hres
     rw [hx, hres]
