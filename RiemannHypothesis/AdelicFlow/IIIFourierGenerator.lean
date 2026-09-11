@@ -19,8 +19,13 @@ Hence the self-adjoint momentum operator `-i ∂q` is the unitary conjugate of
 `2π Q`, where `Q` is maximal multiplication by the real coordinate.
 -/
 
-/-- Plancherel Fourier transform on the logarithmic Hilbert space. -/
-abbrev logFourierUnitary : LogHilbert ≃ₗᵢ[ℂ] LogHilbert :=
+/-- Plancherel Fourier transform on the logarithmic Hilbert space.
+
+This is deliberately an opaque `def` rather than an `abbrev`: all transport
+proofs use only the unitary-equivalence interface, so the kernel should not
+re-expand the implementation of the `L²` Fourier transform while checking
+unbounded-domain witnesses. -/
+def logFourierUnitary : LogHilbert ≃ₗᵢ[ℂ] LogHilbert :=
   MeasureTheory.Lp.fourierTransformₗᵢ ℝ ℂ
 
 /-- Maximal domain of the Fourier-transported generator. -/
@@ -104,8 +109,7 @@ theorem logGenerator_isFormalAdjoint :
           exact logFourierUnitary.inner_map_map _ _
 
 /-- Inverse domain transport: every Fourier-side domain vector pulls back to
-the maximal logarithmic-generator domain.  Keeping this witness separate makes
-the later adjoint-transport proof small enough for the kernel to check directly. -/
+the maximal logarithmic-generator domain. -/
 def logGeneratorInverseDomainMap
     (x : scaledCoordinateOperator.domain) : logGenerator.domain :=
   ⟨logFourierUnitary.symm (x : LogHilbert), by
@@ -126,7 +130,8 @@ theorem fourier_logGeneratorInverseDomainMap
     (x : scaledCoordinateOperator.domain) :
     logFourierUnitary (logGeneratorInverseDomainMap x : LogHilbert) =
       (x : LogHilbert) := by
-  simp [logGeneratorInverseDomainMap]
+  rw [logGeneratorInverseDomainMap_coe]
+  exact logFourierUnitary.apply_symm_apply (x : LogHilbert)
 
 @[simp]
 theorem logGeneratorFourierDomainMap_inverse
