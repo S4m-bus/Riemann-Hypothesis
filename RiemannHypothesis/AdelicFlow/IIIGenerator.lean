@@ -163,7 +163,9 @@ theorem coordinateApply_add (f g : coordinateDomain) :
   filter_upwards [coordinateApply_ae (f + g), coordinateApply_ae f,
     coordinateApply_ae g, Lp.coeFn_add (coordinateApply f) (coordinateApply g),
     Lp.coeFn_add f.1 g.1] with x hfg hf hg hsum hbase
-  rw [hfg, hsum, hf, hg]
+  rw [hfg, hsum]
+  simp only [Pi.add_apply]
+  rw [hf, hg]
   change (x : ℂ) * (f + g : coordinateDomain).1 x =
     (x : ℂ) * f.1 x + (x : ℂ) * g.1 x
   rw [hbase]
@@ -175,7 +177,9 @@ theorem coordinateApply_smul (c : ℂ) (f : coordinateDomain) :
   rw [Lp.ext_iff]
   filter_upwards [coordinateApply_ae (c • f), coordinateApply_ae f,
     Lp.coeFn_smul c (coordinateApply f), Lp.coeFn_smul c f.1] with x hcf hf hsum hbase
-  rw [hcf, hsum, hf]
+  rw [hcf, hsum]
+  simp only [Pi.smul_apply]
+  rw [hf]
   change (x : ℂ) * (c • f : coordinateDomain).1 x = c * ((x : ℂ) * f.1 x)
   rw [hbase]
   simp [smul_eq_mul]
