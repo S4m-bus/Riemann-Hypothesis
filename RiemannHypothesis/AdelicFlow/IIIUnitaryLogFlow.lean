@@ -56,9 +56,11 @@ theorem logUnitaryFlow_neg_left (t : ℝ) (f : LogHilbert) :
   simp
 
 /-- Strong continuity: for every vector in `L²`, its orbit under logarithmic
-translation depends continuously on time. -/
+translation depends continuously on time. The finite-exponent hypothesis is
+made explicit because the general `Lᵖ` continuity theorem requires `p ≠ ∞`. -/
 theorem logUnitaryFlow_strongContinuous (f : LogHilbert) :
     Continuous (fun t : ℝ => logUnitaryFlow t f) := by
+  letI : Fact ((2 : ℝ≥0∞) ≠ ∞) := ⟨by norm_num⟩
   change Continuous (fun t : ℝ => DomAddAct.mk t +ᵥ f)
   exact continuous_vadd.comp (DomAddAct.continuous_mk.prodMk continuous_const)
 
