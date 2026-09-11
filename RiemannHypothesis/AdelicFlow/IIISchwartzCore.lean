@@ -78,9 +78,9 @@ theorem plusResolventCLM_ae (g : LogHilbert) :
     (plusResolventCLM g : ℝ → ℂ) =ᵐ[volume] plusResolventWeighted g := by
   have hmul :=
     (ContinuousLinearMap.lsmul ℂ ℂ).coeFn_holder
-      (r := (2 : ℝ≥0∞)) plusResolventLpInf g
+      (r := (2 : ENNReal)) plusResolventLpInf g
   have h :
-      ((ContinuousLinearMap.lsmul ℂ ℂ).holder (2 : ℝ≥0∞)
+      ((ContinuousLinearMap.lsmul ℂ ℂ).holder (2 : ENNReal)
           plusResolventLpInf g : ℝ → ℂ) =ᵐ[volume]
         plusResolventWeighted g := by
     filter_upwards [hmul, plusResolventLpInf_ae] with x hx hres
